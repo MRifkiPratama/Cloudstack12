@@ -89,4 +89,89 @@ apt upgrade -y
 apt install htop lynx duf -y
 apt install bridge-utils
 ```
+### Install Network Servies and Text Editor
+```
+apt-get install openntpd openssh-server sudo vim tar -y
+apt-get install intel-microcode -y
+passwd teep1
+```
+### Enable SSH Root Login
+```
+sed -i '/#PermitRootLogin prohibit-password/a PermitRootLogin yes' /etc/ssh/sshd_config
+#restart ssh service
+service ssh restart
+#or
+systemctl restart sshd.service
+```
+### CHeck the SSH Configuration
+```
+nano /etc/ssh/sshd_config
+```
+Find the PermitRootLogin and make sure to set it to 'yes'
 
+## Cloudstack Installation
+### Add CloudStack Repository and GPG Key
+```
+sudo -i
+mkdir -p /etc/apt/keyrings
+wget -O- http://packages.shapeblue.com/release.asc | gpg --dearmor | sudo tee /etc/apt/keyrings/cloudstack.gpg > /dev/null
+echo deb [signed-by=/etc/apt/keyrings/cloudstack.gpg] http://packages.shapeblue.com/cloudstack/upstream/debian/4.18 / > /etc/apt/sources.list.d/cloudstack.list/
+```
+
+### Installing Cloudstack and Mysql Server
+```
+apt-get update -y
+apt-get install cloudstack-management mysql-server
+```
+
+### Configure Mysql Config File
+```
+sudo -e /etc/mysql/mysql.conf.d/mysqld.cnf
+```
+```
+server-id = 1
+sql-mode="STRICT_TRANS_TABLES,NO_ENGINE_SUBSTITUTION,ERROR_FOR_DIVISION_BY_ZERO,NO_ZERO_DATE,NO_ZERO_IN_DATE,NO_ENGINE_SUBSTITUTION"
+innodb_rollback_on_timeout=1
+innodb_lock_wait_timeout=600
+max_connections=1000
+log-bin=mysql-bin
+binlog-format = 'ROW'
+```
+
+### Restart and check mysql service status
+```
+systemctl restart mysql
+systemctl status mysql
+```
+
+### Deploy Database as Root and create user name and password
+```
+cloudstack-setup-databases cloud:cloud@localhost --deploy-as=root:teep1 -i 192.168.107.187
+```
+### Setup Primary Storage
+```
+sudo su
+apt-get install nfs-kernel-server quota
+echo "/export  *(rw,async,no_root_squash,no_subtree_check)" > /etc/exports
+mkdir -p /export/primary /export/secondary
+exportfs -a
+```
+### Configure NFS Server
+```
+sudo su
+sed -i -e 's/^RPCMOUNTDOPTS="--manage-gids"$/RPCMOUNTDOPTS="-p 892 --manage-gids"/g' /etc/default/nfs-kernel-server
+sed -i -e 's/^STATDOPTS=$/STATDOPTS="--port 662 --outgoing-port 2020"/g' /etc/default/nfs-common
+echo "NEED_STATD=yes" >> /etc/default/nfs-common
+sed -i -e 's/^RPCRQUOTADOPTS=$/RPCRQUOTADOPTS="-p 875"/g' /etc/default/quota
+service nfs-kernel-server restart
+```
+
+- Perintah sed pertama mengubah konfigurasi RPCMOUNTDOPTS pada file /etc/default/nfs-kernel-server agar rpc.mountd menggunakan port 892 dan mengelola grup ID dengan opsi --manage-gids.
+
+- Perintah sed kedua mengatur STATDOPTS pada file /etc/default/nfs-common agar statd menggunakan port 662 untuk menerima koneksi dan port 2020 untuk koneksi keluar.
+
+- Perintah echo "NEED_STATD=yes" menambahkan konfigurasi agar daemon statd diaktifkan saat layanan NFS berjalan.
+
+- Perintah sed ketiga mengatur RPCRQUOTADOPTS pada file /etc/default/quota agar rpc.rquotad, yang menangani sistem kuota, menggunakan port 875.
+
+- perintah service nfs-kernel-server restart digunakan untuk me-restart layanan NFS agar semua perubahan konfigurasi segera diterapkan.
