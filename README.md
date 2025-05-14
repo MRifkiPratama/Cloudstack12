@@ -103,7 +103,7 @@ service ssh restart
 #or
 systemctl restart sshd.service
 ```
-### CHeck the SSH Configuration
+### Check the SSH Configuration
 ```
 nano /etc/ssh/sshd_config
 ```
