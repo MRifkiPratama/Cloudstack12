@@ -175,3 +175,9 @@ service nfs-kernel-server restart
 - Perintah sed ketiga mengatur RPCRQUOTADOPTS pada file /etc/default/quota agar rpc.rquotad, yang menangani sistem kuota, menggunakan port 875.
 
 - perintah service nfs-kernel-server restart digunakan untuk me-restart layanan NFS agar semua perubahan konfigurasi segera diterapkan.
+
+## Configure Cloudstack Host with KVM Hypervisor
+xxx
+
+## Configure Iptables Firewall
+xxx
