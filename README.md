@@ -1,9 +1,9 @@
 # Apache Cloudstack Private Cloud Installation and Configuration
 ## Contributor
-- Edgrant Henderson Suryajaya
-- Miranti Anggunsari
-- Muhammad Rifki Pratama
-- Safia Amita Khoirunnisa
+- [Edgrant Henderson Suryajaya](https://github.com/EdgrantHS)
+- [Miranti Anggunsari](https://www.github.com/rantiaaa)
+- [Muhammad Rifki Pratama](https://github.com/MRifkiPratama)
+- [Safia Amita Khoirunnisa](https://github.com/mitasafia)
 
 ## Introduction
 Apache CloudStack is an open-source cloud computing platform designed to deploy and manage large networks of virtual machines, providing IaaS (Infrastructure as a Service) through a user-friendly web interface and robust API support. The dependencies are
@@ -177,7 +177,62 @@ service nfs-kernel-server restart
 - perintah service nfs-kernel-server restart digunakan untuk me-restart layanan NFS agar semua perubahan konfigurasi segera diterapkan.
 
 ## Configure Cloudstack Host with KVM Hypervisor
-xxx
+### Install KVM and Cloudstack Agent
+```
+apt-get install qemu-kvm cloudstack-agent -y
+```
+- Command `qemu-kvm` digunakan untuk menginstal virtualizer QEMU dan modul KVM untuk virtualisasi berbasis hardware.
+- Command `cloudstack-agent` digunakan untuk menginstal agent yang digunakan untuk menghubungkan host ke CloudStack.
+
+### Configure KVM Virtualization Management
+```
+sed -i.bak 's/^\(LIBVIRTD_ARGS=\).*/\1"--listen"/' /etc/default/libvirtd
+```
+Command `sed` digunakan untuk memanipulasi file `/etc/default/libvirtd`, di mana akan dilakukan subtitusi baris `LIBVIRTD_ARGS=` menjadi `LIBVIRTD_ARGS="--listen"` yang akan mengaktifkan mode listening.
+
+### Add some lines
+```
+echo 'listen_tls = 0' >> /etc/libvirt/libvirtd.conf
+echo 'listen_tcp = 1' >> /etc/libvirt/libvirtd.conf
+echo 'tcp_port = "16509"' >> /etc/libvirt/libvirtd.conf
+echo 'mdns_adv = 0' >> /etc/libvirt/libvirtd.conf
+echo 'auth_tcp = "none"' >> /etc/libvirt/libvirtd.conf
+```
+Serangkaian baris command di atas digunakan untuk mengkonfigurasi `libvirtd` agar dapat menerima koneksi TCP dari host lain (remote management).
+- `listen_tls = 0` digunakan untuk menonaktifkan mode TLS.
+- `listen_tcp = 1` digunakan untuk mengaktifkan mode TCP.
+- `tcp_port = "16509"` digunakan untuk menentukan port TCP yang akan digunakan, di mana port 16509 adalah port default untuk libvirtd.
+- `mdns_adv = 0` digunakan untuk menonaktifkan mDNS advertising.
+- `auth_tcp = "none"` digunakan untuk menonaktifkan autentikasi TCP (mengizinkan koneksi TCP tanpa autentikasi).
+
+### Restart libvirtd
+```
+systemctl mask libvirtd.socket libvirtd-ro.socket libvirtd-admin.socket libvirtd-tls.socket libvirtd-tcp.socket
+systemctl restart libvirtd
+```
+Pada tahap ini, digunakan command `systemctl mask` yang berfungsi untuk menonaktifkan socket-socket default yang tidak diperlukan oleh `libvirtd`. Kemudian, command `systemctl restart libvirtd` digunakan untuk merestart `libvirtd` agar konfigurasi baru dapat diterapkan dalam sistem.
+
+### Configuration to Support Docker and Other Services
+```
+echo "net.bridge.bridge-nf-call-iptables = 0" >> /etc/sysctl.conf
+echo "net.bridge.bridge-nf-call-arptables = 0" >> /etc/sysctl.conf
+sysctl -p
+```
+Command `sysctl` digunakan untuk mengatur parameter kernel. Di mana serangkaian baris command di atas digunakan untuk menonaktifkan `bridge-nf-call-iptables` dan `bridge-nf-call-arptables` agar Docker dapat berjalan dengan baik.
+
+### Generate Unique Host ID
+```
+apt-get install uuid -y
+UUID=$(uuid)
+echo host_uuid = "\"$UUID\"" >> /etc/libvirt/libvirtd.conf
+```
+Command `apt-get install uuid -y` digunakan untuk menginstal `uuid` yang digunakan untuk menghasilkan UUID unik. Kemudian, command `UUID=$(uuid)` digunakan untuk menghasilkan UUID unik dan menyimpannya ke dalam variabel `UUID`. Terakhir, command `echo host_uuid = "\"$UUID\"" >> /etc/libvirt/libvirtd.conf` digunakan untuk menambahkan UUID ke dalam file konfigurasi `libvirtd` sebagai identitas unik host, yang berarti setiap host akan memiliki UUID yang berbeda.
+
+### Restart libvirtd (setelah update UUID)
+```
+systemctl restart libvirtd
+```
+Setelah mengupdate UUID, digunakan command `systemctl restart libvirtd` untuk merestart `libvirtd` agar konfigurasi baru dapat diterapkan ke dalam sistem.
 
 ## Configure Iptables Firewall
 xxx
