@@ -1,4 +1,5 @@
 # Apache Cloudstack Private Cloud Installation and Configuration
+![image](https://github.com/user-attachments/assets/7f2482b6-7a3c-49ac-912c-8d22d042740b)
 ## Contributor
 - [Edgrant Henderson Suryajaya](https://github.com/EdgrantHS)
 - [Miranti Anggunsari](https://www.github.com/rantiaaa)
