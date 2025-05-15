@@ -236,4 +236,53 @@ systemctl restart libvirtd
 Setelah mengupdate UUID, digunakan command `systemctl restart libvirtd` untuk merestart `libvirtd` agar konfigurasi baru dapat diterapkan ke dalam sistem.
 
 ## Configure Iptables Firewall
-xxx
+To enable proper communication between virtualization services, add the following rules for your local network (adjust `NETWORK` as needed):
+```bash
+NETWORK=192.168.106.0/23
+```
+
+Edit your persistent iptables rules:
+```bash
+sudo -e /etc/iptables/rules.v4
+```
+
+Append these rules:
+```bash
+iptables -A INPUT -s $NETWORK -m state --state NEW -p udp --dport 111 -j ACCEPT
+iptables -A INPUT -s $NETWORK -m state --state NEW -p tcp --dport 111 -j ACCEPT
+iptables -A INPUT -s $NETWORK -m state --state NEW -p tcp --dport 2049 -j ACCEPT
+iptables -A INPUT -s $NETWORK -m state --state NEW -p tcp --dport 32803 -j ACCEPT
+iptables -A INPUT -s $NETWORK -m state --state NEW -p udp --dport 32769 -j ACCEPT
+iptables -A INPUT -s $NETWORK -m state --state NEW -p tcp --dport 892 -j ACCEPT
+iptables -A INPUT -s $NETWORK -m state --state NEW -p tcp --dport 875 -j ACCEPT
+iptables -A INPUT -s $NETWORK -m state --state NEW -p tcp --dport 662 -j ACCEPT
+iptables -A INPUT -s $NETWORK -m state --state NEW -p tcp --dport 8250 -j ACCEPT
+iptables -A INPUT -s $NETWORK -m state --state NEW -p tcp --dport 8080 -j ACCEPT
+iptables -A INPUT -s $NETWORK -m state --state NEW -p tcp --dport 8443 -j ACCEPT
+iptables -A INPUT -s $NETWORK -m state --state NEW -p tcp --dport 9090 -j ACCEPT
+iptables -A INPUT -s $NETWORK -m state --state NEW -p tcp --dport 16514 -j ACCEPT
+```
+
+Make the rules persistent:
+```bash
+sudo apt-get install iptables-persistent
+```
+> When prompted, answer **Yes** to save current rules.
+---
+
+## Disable AppArmor for libvirtd 
+Some versions of libvirt may require AppArmor to be disabled to work properly:
+```bash
+ln -s /etc/apparmor.d/usr.sbin.libvirtd /etc/apparmor.d/disable/
+ln -s /etc/apparmor.d/usr.lib.libvirt.virt-aa-helper /etc/apparmor.d/disable/
+apparmor_parser -R /etc/apparmor.d/usr.sbin.libvirtd
+apparmor_parser -R /etc/apparmor.d/usr.lib.libvirt.virt-aa-helper
+```
+---
+
+## Start CloudStack Management Server 
+```bash
+cloudstack-setup-management
+systemctl status cloudstack-management
+tail -f /var/log/cloudstack/management/management-server.log
+```
