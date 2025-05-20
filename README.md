@@ -1,15 +1,34 @@
-# Apache Cloudstack Private Cloud Installation and Configuration
+# Single Node Apache Cloudstack Private Cloud Installation Guide
+
 ![image](https://github.com/user-attachments/assets/7f2482b6-7a3c-49ac-912c-8d22d042740b)
+
 ## Contributor
+
 - [Edgrant Henderson Suryajaya](https://github.com/EdgrantHS)
 - [Miranti Anggunsari](https://www.github.com/rantiaaa)
 - [Muhammad Rifki Pratama](https://github.com/MRifkiPratama)
 - [Safia Amita Khoirunnisa](https://github.com/mitasafia)
 
+## Disclaimer
+
+> [!IMPORTANT]
+> Our project is intended for Cloudstack installation and configuration on a single node (the host, management server, hypervisor, and storage) in a single machine. Cloudstack can also be set up in a multi-node environment, for that you can refer to other documentation.
+
 ## Introduction
+
+> [!WARNING]
+> Ini perlu revisi, dependency akan diinstall pada guide, fokusin dokumen ke installasi, tidak perlu terlalu banyak teori  
+> \- Edgrant
+
 Apache CloudStack is an open-source cloud computing platform designed to deploy and manage large networks of virtual machines, providing IaaS (Infrastructure as a Service) through a user-friendly web interface and robust API support. The dependencies are
+
 - KVM (Kernel-based Virtual Machine): A Linux kernel module that enables the hardware virtualization features of modern processors, allowing CloudStack to run virtual machines efficiently on host servers.
 - MySQL: A popular open-source relational database management system used by CloudStack to store and manage configuration data, VM metadata, user information, and operational state.
+
+
+> [!WARNING]
+> Coba bisa pake markdown linter (extention vscode ada), harusnya heading elements memiliki space di antara heading dan text. Lalu code block dan text juga harus ada space
+> \- Edgrant
 
 ## Environment Set Up
 ### Hardware Requirement
@@ -20,17 +39,26 @@ Storage: At least 100 GB free disk space (SSD preferred)
 Network: 1 or more NICs (separate NICs recommended for management, public, and guest traffic)
 Operating System: Ubuntu Server 22.04
 ```
-### Network Address
+### Our Network Address
+
+> [!WARNING]
+> Ini bisa dikasih disclaimer/informasi ini kasus kita, orang yang membaca bisa beda
+> \- Edgrant
 
 ```
-Network Address:
-Host IP Address:
-Gateway:
+Network Address: 192.168.1.0/24
+Host IP Address: 192.168.1.200
+Gateway: 192.168.1.200
 Management IP:
 System IP:
 Public IP:
 ```
 ## Utils Set Up
+
+> [!WARNING]
+> Ini bisa dikasih disclaimer/informasi ini tidak wajib, hanya tools untuk membantu
+> \- Edgrant
+
 ### LazyVIm
 ```
 sudo snap install nvim --classic
@@ -45,14 +73,28 @@ sudo apt-get install intel-microcode
 sudo passwd root
 
 ```
+
+> [!WARNING]
+> Utils kurang setup default editor untuk `sudo -e`  
+> \- Edgrant
+
 ## Network Configuration
+
+The netplan configuration is similar to the network/wifi setting in Ubuntu Desktop/Windows, but we edit it using a file. More information available [here](step1-CLI/00_netplan.md)
+
 ### Netplan
-```
+
+```bash
 cd /etc/netplan
 sudo -e /etc/netplan/01.
 ```
 ### Change the IP
-```
+
+> [!WARNING]
+> Netplan revisi, ganti dengan yang terbaru, lalu code block tolong ditulis pakai bahasanya, contohnya ini harusnya yaml, cli harusnya bash (harusnya dikaish tau di markdown linter)  
+> \- Edgrant
+
+```yaml
 # This is the network config written by 'subiquity'
 network:
   version: 2
@@ -77,25 +119,36 @@ network:
         stp: false
         forward-delay: 0
 ```
+
 ### Confirm Netplan
-```
-netplan Get
+
+```bash
+sudo netplan get
 sudo netplan apply
 ```
+
+> [!WARNING]
+> 4 Heading ke bawah bukan termasuk network, harusnya install tools masuk di utils, ssh buat di heading baru  
+> \- Edgrant
+
 ### Install Hardware Resource Monitoring Tools
-```
+
+```bash
 sudo su
 apt update -y
 apt upgrade -y
 apt install htop lynx duf -y
 apt install bridge-utils
 ```
+
 ### Install Network Servies and Text Editor
-```
+
+```bash
 apt-get install openntpd openssh-server sudo vim tar -y
 apt-get install intel-microcode -y
 passwd teep1
 ```
+
 ### Enable SSH Root Login
 ```
 sed -i '/#PermitRootLogin prohibit-password/a PermitRootLogin yes' /etc/ssh/sshd_config
