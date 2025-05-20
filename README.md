@@ -16,22 +16,12 @@
 
 ## Introduction
 
-> [!WARNING]
-> Ini perlu revisi, dependency akan diinstall pada guide, fokusin dokumen ke installasi, tidak perlu terlalu banyak teori  
-> \- Edgrant
-
-Apache CloudStack is an open-source cloud computing platform designed to deploy and manage large networks of virtual machines, providing IaaS (Infrastructure as a Service) through a user-friendly web interface and robust API support. The dependencies are
-
-- KVM (Kernel-based Virtual Machine): A Linux kernel module that enables the hardware virtualization features of modern processors, allowing CloudStack to run virtual machines efficiently on host servers.
-- MySQL: A popular open-source relational database management system used by CloudStack to store and manage configuration data, VM metadata, user information, and operational state.
-
-
-> [!WARNING]
-> Coba bisa pake markdown linter (extention vscode ada), harusnya heading elements memiliki space di antara heading dan text. Lalu code block dan text juga harus ada space
-> \- Edgrant
+Apache CloudStack is an open-source cloud computing platform for deploying and managing large networks of virtual machines. It provides Infrastructure as a Service (IaaS) via a web interface and API.
 
 ## Environment Set Up
+
 ### Hardware Requirement
+
 ```
 CPU: 4-core processor (Intel VT-x or AMD-V enabled)
 RAM: Minimum 8 GB (16 GB recommended for smoother performance)
@@ -39,25 +29,25 @@ Storage: At least 100 GB free disk space (SSD preferred)
 Network: 1 or more NICs (separate NICs recommended for management, public, and guest traffic)
 Operating System: Ubuntu Server 22.04
 ```
+
 ### Our Network Address
 
-> [!WARNING]
-> Ini bisa dikasih disclaimer/informasi ini kasus kita, orang yang membaca bisa beda
-> \- Edgrant
+> [!IMPORTANT]
+> The following configuration is based on our internal setup. Please adjust according to your own network environment.
 
 ```
 Network Address: 192.168.1.0/24
-Host IP Address: 192.168.1.200
+Host IP Address: 192.168.1.220
 Gateway: 192.168.1.200
 Management IP:
 System IP:
 Public IP:
 ```
-## Utils Set Up
 
-> [!WARNING]
-> Ini bisa dikasih disclaimer/informasi ini tidak wajib, hanya tools untuk membantu
-> \- Edgrant
+## Utils Set Up
+> [!IMPORTANT]
+>  This tool is optional, it helps maintain formatting but is not required to complete the installation.
+
 
 ### LazyVIm
 ```
