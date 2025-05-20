@@ -1,6 +1,8 @@
 # Network Configuration
 
-The netplan configuration is similar to the network/wifi setting in Ubuntu Desktop/Windows, but we edit it using a file. Explanation available [here](step1-CLI/00_netplan.md)
+The netplan configuration is similar to the network/wifi setting in Ubuntu Desktop/Windows, but we edit it using a file.
+
+In this step, we will configure the network settings for the host. The host will be connected to the internet using a bridge interface. The bridge interface will be used for all network traffic on the host. The bridge interface will be created using the `cloudbr0` network interface.
 
 ## Netplan
 
