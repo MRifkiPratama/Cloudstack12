@@ -22,7 +22,7 @@ Apache CloudStack is an open-source cloud computing platform for deploying and m
 
 ### Hardware Requirement
 
-```
+```text
 CPU: 4-core processor (Intel VT-x or AMD-V enabled)
 RAM: Minimum 8 GB (16 GB recommended for smoother performance)
 Storage: At least 100 GB free disk space (SSD preferred)
@@ -35,7 +35,7 @@ Operating System: Ubuntu Server 22.04
 > [!IMPORTANT]
 > The following configuration is based on our internal setup. Please adjust according to your own network environment.
 
-```
+```text
 Network Address: 192.168.1.0/24
 Host IP Address: 192.168.1.220
 Gateway: 192.168.1.200
@@ -50,14 +50,14 @@ Public IP:
 
 
 ### LazyVIm
-```
+```bash
 sudo snap install nvim --classic
 sudo apt install gcc git xclip
 mkdir ~/.config/nvim
 git clone https://github.com/LazyVim/starter ~/.config/nvim
 ```
 ### Other Tools
-```
+```bash
 sudo apt-get install openntpd openssh-server sudohtop tar
 sudo apt-get install intel-microcode
 sudo passwd root
