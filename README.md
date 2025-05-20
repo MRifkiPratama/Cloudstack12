@@ -68,6 +68,39 @@ sudo passwd root
 > Utils kurang setup default editor untuk `sudo -e`  
 > \- Edgrant
 
+### Install Hardware Resource Monitoring Tools
+
+```bash
+sudo su
+apt update -y
+apt upgrade -y
+apt install htop lynx duf -y
+apt install bridge-utils
+```
+
+### Install Network Services and Text Editor
+
+```bash
+apt-get install openntpd openssh-server sudo vim tar -y
+apt-get install intel-microcode -y
+passwd teep1
+```
+
+## SSH Configuration
+### Enable SSH Root Login
+```bash
+sed -i '/#PermitRootLogin prohibit-password/a PermitRootLogin yes' /etc/ssh/sshd_config
+#restart ssh service
+service ssh restart
+#or
+systemctl restart sshd.service
+```
+### Check the SSH Configuration
+```bash
+nano /etc/ssh/sshd_config
+```
+Find the PermitRootLogin and make sure to set it to 'yes'
+
 ## Network Configuration
 
 The netplan configuration is similar to the network/wifi setting in Ubuntu Desktop/Windows, but we edit it using a file. More information available [here](step1-CLI/00_netplan.md)
@@ -117,45 +150,9 @@ sudo netplan get
 sudo netplan apply
 ```
 
-> [!WARNING]
-> 4 Heading ke bawah bukan termasuk network, harusnya install tools masuk di utils, ssh buat di heading baru  
-> \- Edgrant
-
-### Install Hardware Resource Monitoring Tools
-
-```bash
-sudo su
-apt update -y
-apt upgrade -y
-apt install htop lynx duf -y
-apt install bridge-utils
-```
-
-### Install Network Servies and Text Editor
-
-```bash
-apt-get install openntpd openssh-server sudo vim tar -y
-apt-get install intel-microcode -y
-passwd teep1
-```
-
-### Enable SSH Root Login
-```
-sed -i '/#PermitRootLogin prohibit-password/a PermitRootLogin yes' /etc/ssh/sshd_config
-#restart ssh service
-service ssh restart
-#or
-systemctl restart sshd.service
-```
-### Check the SSH Configuration
-```
-nano /etc/ssh/sshd_config
-```
-Find the PermitRootLogin and make sure to set it to 'yes'
-
 ## Cloudstack Installation
 ### Add CloudStack Repository and GPG Key
-```
+```bash
 sudo -i
 mkdir -p /etc/apt/keyrings
 wget -O- http://packages.shapeblue.com/release.asc | gpg --dearmor | sudo tee /etc/apt/keyrings/cloudstack.gpg > /dev/null
@@ -163,16 +160,17 @@ echo deb [signed-by=/etc/apt/keyrings/cloudstack.gpg] http://packages.shapeblue.
 ```
 
 ### Installing Cloudstack and Mysql Server
-```
+```bash
 apt-get update -y
 apt-get install cloudstack-management mysql-server
 ```
 
 ### Configure Mysql Config File
-```
+```bash
 sudo -e /etc/mysql/mysql.conf.d/mysqld.cnf
 ```
-```
+
+```conf
 server-id = 1
 sql-mode="STRICT_TRANS_TABLES,NO_ENGINE_SUBSTITUTION,ERROR_FOR_DIVISION_BY_ZERO,NO_ZERO_DATE,NO_ZERO_IN_DATE,NO_ENGINE_SUBSTITUTION"
 innodb_rollback_on_timeout=1
@@ -183,25 +181,27 @@ binlog-format = 'ROW'
 ```
 
 ### Restart and check mysql service status
-```
+```bash
 systemctl restart mysql
 systemctl status mysql
 ```
 
 ### Deploy Database as Root and create user name and password
-```
+```bash
 cloudstack-setup-databases cloud:cloud@localhost --deploy-as=root:teep1 -i 192.168.107.187
 ```
+
 ### Setup Primary Storage
-```
+```bash
 sudo su
 apt-get install nfs-kernel-server quota
 echo "/export  *(rw,async,no_root_squash,no_subtree_check)" > /etc/exports
 mkdir -p /export/primary /export/secondary
 exportfs -a
 ```
+
 ### Configure NFS Server
-```
+```bash
 sudo su
 sed -i -e 's/^RPCMOUNTDOPTS="--manage-gids"$/RPCMOUNTDOPTS="-p 892 --manage-gids"/g' /etc/default/nfs-kernel-server
 sed -i -e 's/^STATDOPTS=$/STATDOPTS="--port 662 --outgoing-port 2020"/g' /etc/default/nfs-common
@@ -222,20 +222,20 @@ service nfs-kernel-server restart
 
 ## Configure Cloudstack Host with KVM Hypervisor
 ### Install KVM and Cloudstack Agent
-```
+```bash
 apt-get install qemu-kvm cloudstack-agent -y
 ```
 - Command `qemu-kvm` digunakan untuk menginstal virtualizer QEMU dan modul KVM untuk virtualisasi berbasis hardware.
 - Command `cloudstack-agent` digunakan untuk menginstal agent yang digunakan untuk menghubungkan host ke CloudStack.
 
 ### Configure KVM Virtualization Management
-```
+```bash
 sed -i.bak 's/^\(LIBVIRTD_ARGS=\).*/\1"--listen"/' /etc/default/libvirtd
 ```
 Command `sed` digunakan untuk memanipulasi file `/etc/default/libvirtd`, di mana akan dilakukan subtitusi baris `LIBVIRTD_ARGS=` menjadi `LIBVIRTD_ARGS="--listen"` yang akan mengaktifkan mode listening.
 
-### Add some lines
-```
+### Libvirt TCP Configuration
+```bash
 echo 'listen_tls = 0' >> /etc/libvirt/libvirtd.conf
 echo 'listen_tcp = 1' >> /etc/libvirt/libvirtd.conf
 echo 'tcp_port = "16509"' >> /etc/libvirt/libvirtd.conf
@@ -250,14 +250,14 @@ Serangkaian baris command di atas digunakan untuk mengkonfigurasi `libvirtd` aga
 - `auth_tcp = "none"` digunakan untuk menonaktifkan autentikasi TCP (mengizinkan koneksi TCP tanpa autentikasi).
 
 ### Restart libvirtd
-```
+```bash
 systemctl mask libvirtd.socket libvirtd-ro.socket libvirtd-admin.socket libvirtd-tls.socket libvirtd-tcp.socket
 systemctl restart libvirtd
 ```
 Pada tahap ini, digunakan command `systemctl mask` yang berfungsi untuk menonaktifkan socket-socket default yang tidak diperlukan oleh `libvirtd`. Kemudian, command `systemctl restart libvirtd` digunakan untuk merestart `libvirtd` agar konfigurasi baru dapat diterapkan dalam sistem.
 
 ### Configuration to Support Docker and Other Services
-```
+```bash
 echo "net.bridge.bridge-nf-call-iptables = 0" >> /etc/sysctl.conf
 echo "net.bridge.bridge-nf-call-arptables = 0" >> /etc/sysctl.conf
 sysctl -p
@@ -265,7 +265,7 @@ sysctl -p
 Command `sysctl` digunakan untuk mengatur parameter kernel. Di mana serangkaian baris command di atas digunakan untuk menonaktifkan `bridge-nf-call-iptables` dan `bridge-nf-call-arptables` agar Docker dapat berjalan dengan baik.
 
 ### Generate Unique Host ID
-```
+```bash
 apt-get install uuid -y
 UUID=$(uuid)
 echo host_uuid = "\"$UUID\"" >> /etc/libvirt/libvirtd.conf
@@ -273,7 +273,7 @@ echo host_uuid = "\"$UUID\"" >> /etc/libvirt/libvirtd.conf
 Command `apt-get install uuid -y` digunakan untuk menginstal `uuid` yang digunakan untuk menghasilkan UUID unik. Kemudian, command `UUID=$(uuid)` digunakan untuk menghasilkan UUID unik dan menyimpannya ke dalam variabel `UUID`. Terakhir, command `echo host_uuid = "\"$UUID\"" >> /etc/libvirt/libvirtd.conf` digunakan untuk menambahkan UUID ke dalam file konfigurasi `libvirtd` sebagai identitas unik host, yang berarti setiap host akan memiliki UUID yang berbeda.
 
 ### Restart libvirtd (setelah update UUID)
-```
+```bash
 systemctl restart libvirtd
 ```
 Setelah mengupdate UUID, digunakan command `systemctl restart libvirtd` untuk merestart `libvirtd` agar konfigurasi baru dapat diterapkan ke dalam sistem.
