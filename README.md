@@ -19,9 +19,7 @@
 Apache CloudStack is an open-source cloud computing platform for deploying and managing large networks of virtual machines. It provides Infrastructure as a Service (IaaS) via a web interface and API.
 
 ## Environment Set Up
-
 ### Hardware Requirement
-
 ```text
 CPU: 4-core processor (Intel VT-x or AMD-V enabled)
 RAM: Minimum 8 GB (16 GB recommended for smoother performance)
@@ -48,7 +46,6 @@ Public IP:
 > [!IMPORTANT]
 >  This tool is optional, it helps maintain formatting but is not required to complete the installation.
 
-
 ### LazyVIm
 ```bash
 sudo snap install nvim --classic
@@ -56,12 +53,12 @@ sudo apt install gcc git xclip
 mkdir ~/.config/nvim
 git clone https://github.com/LazyVim/starter ~/.config/nvim
 ```
+
 ### Other Tools
 ```bash
 sudo apt-get install openntpd openssh-server sudohtop tar
 sudo apt-get install intel-microcode
 sudo passwd root
-
 ```
 
 > [!WARNING]
@@ -69,7 +66,6 @@ sudo passwd root
 > \- Edgrant
 
 ### Install Hardware Resource Monitoring Tools
-
 ```bash
 sudo su
 apt update -y
@@ -79,7 +75,6 @@ apt install bridge-utils
 ```
 
 ### Install Network Services and Text Editor
-
 ```bash
 apt-get install openntpd openssh-server sudo vim tar -y
 apt-get install intel-microcode -y
@@ -95,6 +90,7 @@ service ssh restart
 #or
 systemctl restart sshd.service
 ```
+
 ### Check the SSH Configuration
 ```bash
 nano /etc/ssh/sshd_config
@@ -106,38 +102,41 @@ Find the PermitRootLogin and make sure to set it to 'yes'
 The netplan configuration is similar to the network/wifi setting in Ubuntu Desktop/Windows, but we edit it using a file. More information available [here](step1-CLI/00_netplan.md)
 
 ### Netplan
-
 ```bash
 cd /etc/netplan
-sudo -e /etc/netplan/01.
+sudo -e /etc/netplan/01-static-netcfg.yaml
 ```
+
 ### Change the IP
-
-> [!WARNING]
-> Netplan revisi, ganti dengan yang terbaru, lalu code block tolong ditulis pakai bahasanya, contohnya ini harusnya yaml, cli harusnya bash (harusnya dikaish tau di markdown linter)  
-> \- Edgrant
-
 ```yaml
 # This is the network config written by 'subiquity'
 network:
   version: 2
   renderer: networkd
+
   ethernets:
     enp0s3:
       dhcp4: false
       dhcp6: false
       optional: true
+
   bridges:
     cloudbr0:
-      addresses: [192.168.1.200/24]  #Your host IP address
+      interfaces: 
+        - enp0s3
+      addresses: 
+        - 192.168.1.220/24 #Your host IP address
       routes:
         - to: default
           via: 192.168.1.1
       nameservers:
-        addresses: [1.1.1.1,8.8.8.8]
-      interfaces: [enp0s3]
+        addresses: 
+          - 8.8.8.8
+          - 8.8.4.4
+
       dhcp4: false
       dhcp6: false
+
       parameters:
         stp: false
         forward-delay: 0
