@@ -165,6 +165,48 @@ Installing Apache CloudStack Management Server, database, and NFS configuration 
 
 **<center>[Click for Detailed Installation Explanation](/details/03_cloudstack_installation.md)</center>**
 
+### Installing Cloudstack and Mysql Server
+
+Update package index and install the CloudStack Management Server and MySQL.
+
+```bash
+apt-get update -y
+apt-get install cloudstack-management mysql-server
+```
+
+### Configure Mysql Config File
+
+```bash
+sudo -e/etc/mysql/mysql.conf.d/mysqld.cnf
+```
+
+```bash
+server-id = 1
+sql-mode="STRICT_TRANS_TABLES,NO_ENGINE_SUBSTITUTION,ERROR_FOR_DIVISION_BY_ZERO,NO_ZERO_DATE,NO_ZERO_IN_DATE,NO_ENGINE_SUBSTITUTION"
+innodb_rollback_on_timeout=1
+innodb_lock_wait_timeout=600
+max_connections=1000
+log-bin=mysql-bin
+binlog-format = 'ROW'
+```
+
+### Restart and check mysql service status
+
+Restart MySQL to apply changes and verify it's running.
+
+```bash
+systemctl restart mysql
+systemctl status mysql
+```
+
+### Deploy Database as Root and create user name and password
+
+Deploy the CloudStack database using root credentials and set up the default user.
+
+```bash
+cloudstack-setup-databases cloud:cloud@localhost --deploy-as=root:teep1 -i 192.168.1.220
+```
+
 ## Configure Cloudstack Host with KVM Hypervisor
 
 ### Install KVM and Cloudstack Agent
