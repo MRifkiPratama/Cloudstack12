@@ -338,8 +338,172 @@ cloudstack-setup-management
 systemctl status cloudstack-management
 tail -f /var/log/cloudstack/management/management-server.log
 ```
-
 ![Apache Cloudstack Website](images/apache-cloudstack.png)
 
-## Reconfigure Apache Cloudstack with new IP
-To update the CloudStack environment with a new IP configuration, reconfigure the following components: IP Reserve, Pod, VLAN, the Management Server, and the Storage Configuration. Detailed instructions are provided in the accompanying [configuration guide.](details/02_ipconfig.md)
+### Access the CloudStack Web Interface
+
+Open your browser and go to:
+👉 [http://100.86.85.32:8080/](http://100.86.85.32:8080/)
+
+Default Login:
+
+```
+Username: admin  
+Password: password
+```
+
+### Add a Zone → Network Configuration
+---
+
+#### Select Zone Type
+You will be asked to choose the **zone type**:
+- **Core**: Standard zone where main compute workloads run. Suitable for production environments.
+- **Edge**: Lightweight zone typically used for edge computing (e.g., IoT, CDN, remote locations). May have limited resources or services.
+
+> **Recommendation**: Select `Core` for a full-featured, general-purpose zone.
+
+
+#### Select Network Type
+Next, choose the **network type**:
+- **Basic**: Flat network, no VLANs. Each VM gets a direct IP. Simpler setup.
+- **Advanced**: Supports VLANs, virtual routers, and multiple guest networks. More flexibility.
+
+> **Recommendation**: Select `Advanced` for most production use cases with isolation and rich networking features.
+
+
+#### Fill Zone Details
+
+| Field          | Example           | Description                          |
+|----------------|-------------------|--------------------------------------|
+| Name           | `Final-Zone-12`   | A descriptive name for the zone      |
+| IPv4 DNS 1     | `8.8.8.8`         | Public DNS server                    |
+| Internal DNS 1 | `192.168.1.220`   | Internal DNS for system VMs          |
+| Hypervisor     | `KVM`             | Type of hypervisor used              |
+
+#### Configure Network
+
+##### Add Physical Network
+1. Enter the name of the physical network, e.g., `Physical Network 1`
+2. Select the **Isolation Method**: e.g., `VLAN`
+3. Enable the following **Traffic Types**:
+   - Guest
+   - Management
+   - Public
+
+##### Configure Public Traffic
+
+| Field     | Example            |
+|-----------|--------------------|
+| Gateway   | `192.168.1.1`      |
+| Netmask   | `255.255.255.0`    |
+| Start IP  | `192.168.1.221`    |
+| End IP    | `192.168.1.225`    |
+
+> These IPs are used for public access to VMs.
+
+#### Add Pod
+
+Each zone must have at least **one pod**, which contains clusters and hosts.
+| Field     | Example           |
+|-----------|-------------------|
+| Name      | `Final-Pod-12`    |
+| Gateway   | `192.168.1.1`     |
+| Netmask   | `255.255.255.0`   |
+| Start IP  | `192.168.1.226`   |
+| End IP    | `192.168.1.230`   |
+
+#### Configure Guest Traffic
+- **VLAN/VNI Range**: `3300 - 3339`
+
+> Used to isolate guest network traffic. Ensure VLANs are configured on your switch/router.
+
+#### Add Resources
+##### Cluster
+- **Cluster Name**: `Final-Cluster-12`
+
+> Clusters group hypervisor hosts that share storage and network configurations.
+
+##### Host
+
+| Field     | Example            |
+|-----------|--------------------|
+| Hostname  | `192.168.1.220`    |
+| Username  | `root`             |
+| Password  | `******`           |
+
+> Add at least one host running your chosen hypervisor (e.g., KVM).
+
+##### Primary Storage
+
+| Field     | Example                |
+|-----------|------------------------|
+| Name      | `Final-Primstor-12`    |
+| Scope     | `Zone`                 |
+| Protocol  | `NFS`                  |
+| Server    | `192.168.1.220`        |
+| Path      | `/export/primary`      |
+| Provider  | `DefaultPrimary`       |
+
+> Primary storage holds VM disk volumes.
+
+##### Secondary Storage
+
+| Field     | Example                |
+|-----------|------------------------|
+| Provider  | `NFS`                  |
+| Name      | `Final-Secstor-2`      |
+| Server    | `192.168.1.1`          |
+| Path      | `/export/secondary`    |
+
+> Secondary storage is used for templates, ISOs, and snapshots.
+
+---
+
+## Create Virtual Machine
+
+### Create a Compute Offering
+A **Compute Offering** defines the CPU, memory, and other compute resources allocated to virtual machines.
+
+Fill in the Details:
+
+| Field                     | Value           |
+|---------------------------|---------------  |
+| Name                      | `big`           |
+| Description               | `big`           |
+| Compute Offering Type     | `Fixed Offering`|
+| CPU Cores                 | `4`             |
+| CPU (MHz)                 | `1000`          |
+| Memory (MB)               | `4096`          |
+| Dynamic Scaling Enabled   | `On`            |
+| GPU                       | `None`          |
+| Public                    | `Yes`           |
+
+### Create a New Instance
+#### Select Deployment Infrastructure
+- **Zone**: `final-zone-12`
+- **Pod**: `final-pod-12`
+- **Cluster**: `final-cluster-12`
+- **Host**: `mizuki`
+
+#### Template/ISO
+- Choose from **My ISOs**
+- Select your preferred ISO (e.g., a Linux or Windows boot image)
+
+#### Configure Network
+If you don’t have an existing network, create **Isolated** network:
+| Field             | Value                                      |
+|-------------------|--------------------------------------------|
+| Name              | `network-12`                               |
+| Zone              | `final-zone-12`                            |
+
+> This network will provide isolated guest networking with outbound internet access.
+
+#### Configure Instance Details
+| Field               | Value                    |
+|---------------------|--------------------------|
+| Name                | `mizu7`                  |
+| Keyboard Language   | `Standard US Keyboard`   |
+
+#### Final Step: Launch the Instance
+Click **"Launch Instance"**.  
+CloudStack will provision your virtual machine based on the provided options.
