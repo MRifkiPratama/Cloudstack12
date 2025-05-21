@@ -16,7 +16,7 @@ sudo -e /etc/netplan/01-static-netcfg.yaml
 ### Netplan Explanation
 
 - `cd path` changes the directory to the specified path.
-- `sudo -e filename` opens the file in the default editor. The default should be `nano`, but we've changed it to `nvim` in the `~/.bashrc` file. 
+- `sudo -e filename` opens the file in the default editor. The default should be `nano`, but we've changed it to `nvim` in the `~/.bashrc` file.
 
 ### Netplan Notes
 
@@ -68,7 +68,7 @@ Bridge `cloudbr0` is created with the following settings:
 - `interfaces`: The interface to be bridged. We enslave the `enp0s3` interface to the `cloudbr0` bridge, which means that the `cloudbr0` bridge will be used for all network traffic on the `enp0s3` interface.
 - `addresses`: The IP address of the host. This should be the same as the one you set in the `cloudbr0` bridge in the `cloudbr0` network interface.
 - `routes`: The default route for the host
-- `nameservers`: The DNS servers for the host. 
+- `nameservers`: The DNS servers for the host.
 - turn of dhcp using `dhcp4: false` and `dhcp6: false`
 - `stp: false` and `forward-delay: 0` are used to speed up the bridge connection. This is not necessary for a single host, but it can help in some cases.
 
@@ -113,7 +113,7 @@ After applying the changes, check the network configuration using the following 
 ip a
 ```
 
-This command will show the current network configuration. The `cloudbr0` bridge should be up and running with the correct IP address. The `enp0s3` interface should be empty and not have an IP address. 
+This command will show the current network configuration. The `cloudbr0` bridge should be up and running with the correct IP address. The `enp0s3` interface should be empty and not have an IP address.
 
 ```
 ping 1.1.1.1 -c 16
