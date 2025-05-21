@@ -137,7 +137,7 @@ Make the rules persistent:
 sudo apt-get install iptables-persistent
 ```
 
-![7](../images/07_iptables-firewall.png)
+![7](../images/cloudstack-host-kvm/07_iptables-firewall.png)
 
 > When prompted, answer **Yes** to save current rules.
 
@@ -152,7 +152,7 @@ apparmor_parser -R /etc/apparmor.d/usr.sbin.libvirtd
 apparmor_parser -R /etc/apparmor.d/usr.lib.libvirt.virt-aa-helper
 ```
 
-![8](../images/08_apparmor.png)
+![8](../images/cloudstack-host-kvm/08_apparmor.png)
 
 ---
 
