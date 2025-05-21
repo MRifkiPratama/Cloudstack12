@@ -33,7 +33,7 @@
     - [Restart libvirtd](#restart-libvirtd)
     - [Configuration to Support Docker and Other Services](#configuration-to-support-docker-and-other-services)
     - [Generate Unique Host ID](#generate-unique-host-id)
-    - [Restart libvirtd (setelah update UUID)](#restart-libvirtd-setelah-update-uuid)
+    - [Restart libvirtd (after updating UUID)](#restart-libvirtd-after-updating-uuid)
   - [Configure Iptables Firewall](#configure-iptables-firewall)
   - [Disable AppArmor for libvirtd](#disable-apparmor-for-libvirtd)
   - [Start CloudStack Management Server](#start-cloudstack-management-server)
@@ -209,24 +209,29 @@ cloudstack-setup-databases cloud:cloud@localhost --deploy-as=root:teep1 -i 192.1
 
 ## Configure Cloudstack Host with KVM Hypervisor
 
+Installing and configuring a CloudStack host with KVM hypervisor, libvirt TCP access, unique host ID, and network settings to enable virtualization and agent communication.
+
+**<center>[Click for Detailed Installation Explanation](/details/04_cloudstack_host.md)</center>**
+
 ### Install KVM and Cloudstack Agent
+
+This command installs the QEMU-KVM hypervisor and the CloudStack agent, which enables the host to connect and communicate with the CloudStack management server.
 
 ```bash
 apt-get install qemu-kvm cloudstack-agent -y
 ```
 
-- Command `qemu-kvm` digunakan untuk menginstal virtualizer QEMU dan modul KVM untuk virtualisasi berbasis hardware.
-- Command `cloudstack-agent` digunakan untuk menginstal agent yang digunakan untuk menghubungkan host ke CloudStack.
-
 ### Configure KVM Virtualization Management
+
+This modifies the `libvirtd` default configuration to enable the daemon to listen for remote connections by setting `LIBVIRTD_ARGS="--listen"`.
 
 ```bash
 sed -i.bak 's/^\(LIBVIRTD_ARGS=\).*/\1"--listen"/' /etc/default/libvirtd
 ```
 
-Command `sed` digunakan untuk memanipulasi file `/etc/default/libvirtd`, di mana akan dilakukan subtitusi baris `LIBVIRTD_ARGS=` menjadi `LIBVIRTD_ARGS="--listen"` yang akan mengaktifkan mode listening.
-
 ### Libvirt TCP Configuration
+
+These commands configure `libvirtd` to allow TCP connections without authentication. TLS is disabled, TCP is enabled on port 16509 (the default libvirt port), mDNS advertisement is turned off, and no authentication is required for TCP connections.
 
 ```bash
 echo 'listen_tls = 0' >> /etc/libvirt/libvirtd.conf
@@ -236,24 +241,18 @@ echo 'mdns_adv = 0' >> /etc/libvirt/libvirtd.conf
 echo 'auth_tcp = "none"' >> /etc/libvirt/libvirtd.conf
 ```
 
-Serangkaian baris command di atas digunakan untuk mengkonfigurasi `libvirtd` agar dapat menerima koneksi TCP dari host lain (remote management).
-
-- `listen_tls = 0` digunakan untuk menonaktifkan mode TLS.
-- `listen_tcp = 1` digunakan untuk mengaktifkan mode TCP.
-- `tcp_port = "16509"` digunakan untuk menentukan port TCP yang akan digunakan, di mana port 16509 adalah port default untuk libvirtd.
-- `mdns_adv = 0` digunakan untuk menonaktifkan mDNS advertising.
-- `auth_tcp = "none"` digunakan untuk menonaktifkan autentikasi TCP (mengizinkan koneksi TCP tanpa autentikasi).
-
 ### Restart libvirtd
+
+This masks the default libvirt sockets that are not needed and restarts the `libvirtd` service to apply the changes.
 
 ```bash
 systemctl mask libvirtd.socket libvirtd-ro.socket libvirtd-admin.socket libvirtd-tls.socket libvirtd-tcp.socket
 systemctl restart libvirtd
 ```
 
-Pada tahap ini, digunakan command `systemctl mask` yang berfungsi untuk menonaktifkan socket-socket default yang tidak diperlukan oleh `libvirtd`. Kemudian, command `systemctl restart libvirtd` digunakan untuk merestart `libvirtd` agar konfigurasi baru dapat diterapkan dalam sistem.
-
 ### Configuration to Support Docker and Other Services
+
+These kernel parameters are adjusted to prevent issues with Docker and other services by disabling bridge network calls to `iptables` and `arptables`.
 
 ```bash
 echo "net.bridge.bridge-nf-call-iptables = 0" >> /etc/sysctl.conf
@@ -261,9 +260,9 @@ echo "net.bridge.bridge-nf-call-arptables = 0" >> /etc/sysctl.conf
 sysctl -p
 ```
 
-Command `sysctl` digunakan untuk mengatur parameter kernel. Di mana serangkaian baris command di atas digunakan untuk menonaktifkan `bridge-nf-call-iptables` dan `bridge-nf-call-arptables` agar Docker dapat berjalan dengan baik.
-
 ### Generate Unique Host ID
+
+This installs the `uuid` package, generates a unique UUID for the host, and appends it to the `libvirtd` configuration to ensure each host has a distinct identifier.
 
 ```bash
 apt-get install uuid -y
@@ -271,22 +270,20 @@ UUID=$(uuid)
 echo host_uuid = "\"$UUID\"" >> /etc/libvirt/libvirtd.conf
 ```
 
-Command `apt-get install uuid -y` digunakan untuk menginstal `uuid` yang digunakan untuk menghasilkan UUID unik. Kemudian, command `UUID=$(uuid)` digunakan untuk menghasilkan UUID unik dan menyimpannya ke dalam variabel `UUID`. Terakhir, command `echo host_uuid = "\"$UUID\"" >> /etc/libvirt/libvirtd.conf` digunakan untuk menambahkan UUID ke dalam file konfigurasi `libvirtd` sebagai identitas unik host, yang berarti setiap host akan memiliki UUID yang berbeda.
+### Restart libvirtd (after updating UUID)
 
-### Restart libvirtd (setelah update UUID)
+The `libvirtd` service will be restarted again to apply the UUID configuration update.
 
 ```bash
 systemctl restart libvirtd
 ```
-
-Setelah mengupdate UUID, digunakan command `systemctl restart libvirtd` untuk merestart `libvirtd` agar konfigurasi baru dapat diterapkan ke dalam sistem.
 
 ## Configure Iptables Firewall
 
 To enable proper communication between virtualization services, add the following rules for your local network (adjust `NETWORK` as needed):
 
 ```bash
-NETWORK=192.168.106.0/23
+NETWORK=192.168.1.0/24
 ```
 
 Edit your persistent iptables rules:
@@ -322,7 +319,7 @@ sudo apt-get install iptables-persistent
 > When prompted, answer **Yes** to save current rules.
 ---
 
-## Disable AppArmor for libvirtd
+### Disable AppArmor for libvirtd
 
 Some versions of libvirt may require AppArmor to be disabled to work properly:
 
@@ -343,5 +340,7 @@ systemctl status cloudstack-management
 tail -f /var/log/cloudstack/management/management-server.log
 ```
 
+![Apache Cloudstack Website](images/apache-cloudstack.png)
+
 ## Reconfigure Apache Cloudstack with new IP
-To update the CloudStack environment with a new IP configuration, reconfigure the following components: IP Reserve, Pod, VLAN, the Management Server, and the Storage Configuration. Detailed instructions are provided in the accompanying [configuration guide.](step1-CLI/02_ipconfig.md)
+To update the CloudStack environment with a new IP configuration, reconfigure the following components: IP Reserve, Pod, VLAN, the Management Server, and the Storage Configuration. Detailed instructions are provided in the accompanying [configuration guide.](details/02_ipconfig.md)
