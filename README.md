@@ -101,13 +101,13 @@ The tools that we use are:
 - **Tailscale:** A VPN service that allows you to connect to your machine from anywhere
 - **Lazyvim:** A Text Editor, more specifically a user friendly Neovim configuration
 
-**<center>[Click for Detailed Utils Explanation](step1-CLI/01_utils.md)</center>**
+**<center>[Click for Detailed Utils Explanation](/details/01_utils.md)</center>**
 
 ## Network Configuration
 
 The netplan configuration is similar to the network/wifi setting in Ubuntu Desktop/Windows, but we edit it using a file. 
 
-**<center>[Click for Detailed Network Explanation](step1-CLI/00_netplan.md)</center>**
+**<center>[Click for Detailed Network Explanation](/details/00_netplan.md)</center>**
 
 ### Netplan
 
@@ -161,81 +161,9 @@ sudo netplan apply
 
 ## Cloudstack Installation
 
-### Add CloudStack Repository and GPG Key
+Installing Apache CloudStack Management Server, database, and NFS configuration to prepare your cloud environment.
 
-```bash
-sudo -i
-mkdir -p /etc/apt/keyrings
-wget -O- http://packages.shapeblue.com/release.asc | gpg --dearmor | sudo tee /etc/apt/keyrings/cloudstack.gpg > /dev/null
-echo deb [signed-by=/etc/apt/keyrings/cloudstack.gpg] http://packages.shapeblue.com/cloudstack/upstream/debian/4.18 / > /etc/apt/sources.list.d/cloudstack.list/
-```
-
-### Installing Cloudstack and Mysql Server
-
-```bash
-apt-get update -y
-apt-get install cloudstack-management mysql-server
-```
-
-### Configure Mysql Config File
-
-```bash
-sudo -e /etc/mysql/mysql.conf.d/mysqld.cnf
-```
-
-```conf
-server-id = 1
-sql-mode="STRICT_TRANS_TABLES,NO_ENGINE_SUBSTITUTION,ERROR_FOR_DIVISION_BY_ZERO,NO_ZERO_DATE,NO_ZERO_IN_DATE,NO_ENGINE_SUBSTITUTION"
-innodb_rollback_on_timeout=1
-innodb_lock_wait_timeout=600
-max_connections=1000
-log-bin=mysql-bin
-binlog-format = 'ROW'
-```
-
-### Restart and check mysql service status
-
-```bash
-systemctl restart mysql
-systemctl status mysql
-```
-
-### Deploy Database as Root and create user name and password
-
-```bash
-cloudstack-setup-databases cloud:cloud@localhost --deploy-as=root:teep1 -i 192.168.107.187
-```
-
-### Setup Primary Storage
-
-```bash
-sudo su
-apt-get install nfs-kernel-server quota
-echo "/export  *(rw,async,no_root_squash,no_subtree_check)" > /etc/exports
-mkdir -p /export/primary /export/secondary
-exportfs -a
-```
-
-### Configure NFS Server
-
-```bash
-sudo su
-sed -i -e 's/^RPCMOUNTDOPTS="--manage-gids"$/RPCMOUNTDOPTS="-p 892 --manage-gids"/g' /etc/default/nfs-kernel-server
-sed -i -e 's/^STATDOPTS=$/STATDOPTS="--port 662 --outgoing-port 2020"/g' /etc/default/nfs-common
-echo "NEED_STATD=yes" >> /etc/default/nfs-common
-sed -i -e 's/^RPCRQUOTADOPTS=$/RPCRQUOTADOPTS="-p 875"/g' /etc/default/quota
-service nfs-kernel-server restart
-```
-
-- Perintah sed pertama mengubah konfigurasi RPCMOUNTDOPTS pada file /etc/default/nfs-kernel-server agar rpc.mountd menggunakan port 892 dan mengelola grup ID dengan opsi --manage-gids.
-
-- Perintah sed kedua mengatur STATDOPTS pada file /etc/default/nfs-common agar statd menggunakan port 662 untuk menerima koneksi dan port 2020 untuk koneksi keluar.
-
-- Perintah echo "NEED_STATD=yes" menambahkan konfigurasi agar daemon statd diaktifkan saat layanan NFS berjalan.
-
-- Perintah sed ketiga mengatur RPCRQUOTADOPTS pada file /etc/default/quota agar rpc.rquotad, yang menangani sistem kuota, menggunakan port 875.
-
-- perintah service nfs-kernel-server restart digunakan untuk me-restart layanan NFS agar semua perubahan konfigurasi segera diterapkan.
+**<center>[Click for Detailed Installation Explanation](/details/03_cloudstack_installation.md)</center>**
 
 ## Configure Cloudstack Host with KVM Hypervisor
 
