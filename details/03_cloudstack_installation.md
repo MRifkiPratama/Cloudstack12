@@ -148,7 +148,7 @@ tail -f /var/log/cloudstack/management/management-server.log
 | `cloudstack-setup-databases: command not found`        | CloudStack not installed correctly    | Reinstall: `apt-get install --reinstall cloudstack-management` |
 | MySQL fails to restart due to `sql-mode`               | Syntax or formatting error            | Use double quotes (`"`) around the entire value                |
 | NFS export not visible                                 | Export not applied or paths missing   | Make sure `/export/...` exists and run `exportfs -a`           |
-| `rpc.mountd` port conflict                             | Port 892 already in use               | Change to a different unused port in the NFS config            |
+| `rpc.mountd` port conflict                             | Port already in use                   | Change to a different unused port in the NFS config            |
 
 ## Possible Warning and is it Safe to Ignore?
 
