@@ -1,5 +1,20 @@
 # Network Configuration
 
+- [Network Configuration](#network-configuration)
+  - [Netplan](#netplan)
+    - [Netplan Command](#netplan-command)
+    - [Netplan Explanation](#netplan-explanation)
+    - [Netplan Notes](#netplan-notes)
+  - [Change the IP](#change-the-ip)
+    - [IP Change Explanation](#ip-change-explanation)
+    - [IP Change Notes](#ip-change-notes)
+    - [Netplan Image](#netplan-image)
+  - [Confirm Netplan](#confirm-netplan)
+    - [Confirm Netplan Explanation](#confirm-netplan-explanation)
+    - [Confirm Netplan Notes](#confirm-netplan-notes)
+    - [Netplan Apply Image](#netplan-apply-image)
+  - [Validation](#validation)
+
 The netplan configuration is similar to the network/wifi setting in Ubuntu Desktop/Windows, but we edit it using a file.
 
 In this step, we will configure the network settings for the host. The host will be connected to the internet using a bridge interface. The bridge interface will be used for all network traffic on the host. The bridge interface will be created using the `cloudbr0` network interface.
