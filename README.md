@@ -32,8 +32,8 @@
     - [Configuration to Support Docker and Other Services](#configuration-to-support-docker-and-other-services)
     - [Generate Unique Host ID](#generate-unique-host-id)
     - [Restart libvirtd (after updating UUID)](#restart-libvirtd-after-updating-uuid)
-  - [Configure Iptables Firewall](#configure-iptables-firewall)
-  - [Disable AppArmor for libvirtd](#disable-apparmor-for-libvirtd)
+    - [Configure Iptables Firewall](#configure-iptables-firewall)
+    - [Disable AppArmor for libvirtd](#disable-apparmor-for-libvirtd)
   - [Start CloudStack Management Server](#start-cloudstack-management-server)
 
 
@@ -205,6 +205,8 @@ Deploy the CloudStack database using root credentials and set up the default use
 cloudstack-setup-databases cloud:cloud@localhost --deploy-as=root:teep1 -i 192.168.1.220
 ```
 
+---
+
 ## Configure Cloudstack Host with KVM Hypervisor
 
 Installing and configuring a CloudStack host with KVM hypervisor, libvirt TCP access, unique host ID, and network settings to enable virtualization and agent communication.
@@ -276,7 +278,7 @@ The `libvirtd` service will be restarted again to apply the UUID configuration u
 systemctl restart libvirtd
 ```
 
-## Configure Iptables Firewall
+### Configure Iptables Firewall
 
 To enable proper communication between virtualization services, add the following rules for your local network (adjust `NETWORK` as needed):
 
@@ -315,7 +317,6 @@ sudo apt-get install iptables-persistent
 ```
 
 > When prompted, answer **Yes** to save current rules.
----
 
 ### Disable AppArmor for libvirtd
 

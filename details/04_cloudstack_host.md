@@ -7,6 +7,8 @@
 - [Configuration to Support Docker and Other Services](#configuration-to-support-docker-and-other-services)
 - [Generate Unique Host ID](#generate-unique-host-id)
 - [Restart libvirtd (after updating UUID)](#restart-libvirtd-after-updating-uuid)
+- [Configure Iptables Firewall](#configure-iptables-firewall)
+- [Disable AppArmor for libvirtd](#disable-apparmor-for-libvirtd)
 - [Additional Information](#additional-information)
 - [Setup Validation](#setup-validation)
 - [Common Error and How to Fix it](#common-error-and-how-to-fix-it)
@@ -97,6 +99,63 @@ Restart `libvirtd` service once again to apply the UUID configuration update.
 systemctl restart libvirtd
 ```
 
+## Configure Iptables Firewall
+
+To enable proper communication between virtualization services, add the following rules for your local network (adjust `NETWORK` as needed):
+
+```bash
+NETWORK=192.168.1.0/24
+```
+
+Edit your persistent iptables rules:
+
+```bash
+sudo -e /etc/iptables/rules.v4
+```
+
+Append these rules:
+
+```bash
+iptables -A INPUT -s $NETWORK -m state --state NEW -p udp --dport 111 -j ACCEPT
+iptables -A INPUT -s $NETWORK -m state --state NEW -p tcp --dport 111 -j ACCEPT
+iptables -A INPUT -s $NETWORK -m state --state NEW -p tcp --dport 2049 -j ACCEPT
+iptables -A INPUT -s $NETWORK -m state --state NEW -p tcp --dport 32803 -j ACCEPT
+iptables -A INPUT -s $NETWORK -m state --state NEW -p udp --dport 32769 -j ACCEPT
+iptables -A INPUT -s $NETWORK -m state --state NEW -p tcp --dport 892 -j ACCEPT
+iptables -A INPUT -s $NETWORK -m state --state NEW -p tcp --dport 875 -j ACCEPT
+iptables -A INPUT -s $NETWORK -m state --state NEW -p tcp --dport 662 -j ACCEPT
+iptables -A INPUT -s $NETWORK -m state --state NEW -p tcp --dport 8250 -j ACCEPT
+iptables -A INPUT -s $NETWORK -m state --state NEW -p tcp --dport 8080 -j ACCEPT
+iptables -A INPUT -s $NETWORK -m state --state NEW -p tcp --dport 8443 -j ACCEPT
+iptables -A INPUT -s $NETWORK -m state --state NEW -p tcp --dport 9090 -j ACCEPT
+iptables -A INPUT -s $NETWORK -m state --state NEW -p tcp --dport 16514 -j ACCEPT
+```
+
+Make the rules persistent:
+
+```bash
+sudo apt-get install iptables-persistent
+```
+
+![7](../images/07_iptables-firewall.png)
+
+> When prompted, answer **Yes** to save current rules.
+
+## Disable AppArmor for libvirtd
+
+Some versions of libvirt may require AppArmor to be disabled to work properly:
+
+```bash
+ln -s /etc/apparmor.d/usr.sbin.libvirtd /etc/apparmor.d/disable/
+ln -s /etc/apparmor.d/usr.lib.libvirt.virt-aa-helper /etc/apparmor.d/disable/
+apparmor_parser -R /etc/apparmor.d/usr.sbin.libvirtd
+apparmor_parser -R /etc/apparmor.d/usr.lib.libvirt.virt-aa-helper
+```
+
+![8](../images/08_apparmor.png)
+
+---
+
 ## Additional Information
 
 * **CloudStack agent configuration located in**: `/etc/cloudstack/agent/agent.properties`
@@ -110,6 +169,8 @@ systemctl restart libvirtd
   systemctl status libvirtd
   systemctl status cloudstack-agent
   ```
+
+---
 
 ## Setup Validation
 
@@ -145,6 +206,20 @@ virsh -c qemu+tcp://<host-ip>/system list
 
 From the management server, this should return an empty list or running VMs.
 
+### 5. Validate iptables
+
+```bash
+sudo iptables -L -n | grep 8080
+```
+
+### 5. Check AppArmor status
+
+```bash
+sudo aa-status
+```
+
+Should not list libvirtd under active profiles.
+
 ---
 
 ## Common Error and How to Fix It
@@ -155,6 +230,7 @@ From the management server, this should return an empty list or running VMs.
 | CloudStack cannot add host                        | Agent not running or blocked by firewall | Check `cloudstack-agent`, open port 16509                |
 | `Unable to connect to libvirt`                    | Auth config issue or host UUID missing   | Ensure `auth_tcp="none"` and `host_uuid` is set          |
 | `bridge-nf-call-iptables` related error in Docker | Kernel sysctl values not set             | Re-run `sysctl -p` after appending to `/etc/sysctl.conf` |
+| AppArmor denial messages in logs  | AppArmor blocking libvirt                | Disable as shown above |
 
 ---
 
@@ -166,6 +242,7 @@ Not all warnings require action. Here's a general rule on this case:
 
   * Warnings like "default TLS port not enabled"
   * Notices about deprecated configs (if not impacting functionality)
+  * When `iptables-persistent: Warning on boot` warning shown, as long as rules load with `iptables -L`.
 
 * **Must NOT ignore**:
 
