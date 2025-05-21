@@ -372,3 +372,6 @@ cloudstack-setup-management
 systemctl status cloudstack-management
 tail -f /var/log/cloudstack/management/management-server.log
 ```
+
+## Reconfigure Apache Cloudstack with new IP
+To update the CloudStack environment with a new IP configuration, reconfigure the following components: IP Reserve, Pod, VLAN, the Management Server, and the Storage Configuration. Detailed instructions are provided in the accompanying [configuration guide.](step1-CLI/02_ipconfig.md)
