@@ -209,7 +209,7 @@ cloudstack-setup-databases cloud:cloud@localhost --deploy-as=root:teep1 -i 192.1
 
 Installing and configuring a CloudStack host with KVM hypervisor, libvirt TCP access, unique host ID, and network settings to enable virtualization and agent communication.
 
-**<center>[Click for Detailed Installation Explanation](/details/04_cloudstack_host.md)</center>**
+**<center>[Click for Detailed CloudStack Host Configuration Explanation](/details/04_cloudstack_host.md)</center>**
 
 ### Install KVM and Cloudstack Agent
 
