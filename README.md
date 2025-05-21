@@ -24,8 +24,6 @@
     - [Configure Mysql Config File](#configure-mysql-config-file)
     - [Restart and check mysql service status](#restart-and-check-mysql-service-status)
     - [Deploy Database as Root and create user name and password](#deploy-database-as-root-and-create-user-name-and-password)
-    - [Setup Primary Storage](#setup-primary-storage)
-    - [Configure NFS Server](#configure-nfs-server)
   - [Configure Cloudstack Host with KVM Hypervisor](#configure-cloudstack-host-with-kvm-hypervisor)
     - [Install KVM and Cloudstack Agent](#install-kvm-and-cloudstack-agent)
     - [Configure KVM Virtualization Management](#configure-kvm-virtualization-management)
