@@ -1,6 +1,11 @@
 # Utils Set Up
 
+In this section, we will set up some tools that will help in the installation process. These tools are not required for the installation, but they will make the installation process easier and more convenient.
+
+## Table of Contents
+
 - [Utils Set Up](#utils-set-up)
+  - [Table of Contents](#table-of-contents)
   - [LazyVIm](#lazyvim)
   - [Configure LazyVim](#configure-lazyvim)
   - [Default Editor Configuration](#default-editor-configuration)
@@ -13,10 +18,6 @@
     - [Start Tailscale](#start-tailscale)
     - [Confirm Tailscale](#confirm-tailscale)
     - [Using Tailscale](#using-tailscale)
-
-  
-In this section, we will set up some tools that will help in the installation process. These tools are not required for the installation, but they will make the installation process easier and more convenient.
-
 
 ## LazyVIm
 
@@ -87,7 +88,7 @@ service ssh restart
 systemctl restart sshd.service
 ```
 
-Root login is not required for the installation, but it is recommended to enable it for easier access to the host. 
+Root login is not required for the installation, but it is recommended to enable it for easier access to the host.
 
 ### Check the SSH Configuration
 
@@ -117,7 +118,7 @@ To start Tailscale, run the following command:
 sudo tailscale up
 ```
 
-This will start Tailscale and give you a URL to authenticate your device. Open the URL in the browser of your personal computer and log in with your Tailscale account. After logging in, a confirmation message will show up in the terminal. 
+This will start Tailscale and give you a URL to authenticate your device. Open the URL in the browser of your personal computer and log in with your Tailscale account. After logging in, a confirmation message will show up in the terminal.
 
 ### Confirm Tailscale
 
@@ -127,7 +128,7 @@ To check if Tailscale is running, run the following command:
 tailscale status
 ```
 
-This will show you the status of Tailscale and the IP address of your host. 
+This will show you the status of Tailscale and the IP address of your host.
 
 In your personal computer, you can check the Tailscale IP address by running the same command or by using the Tailscale app.
 

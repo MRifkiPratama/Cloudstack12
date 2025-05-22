@@ -1,16 +1,21 @@
 # Cloudstack Installation
 
-- [Add Cloudstack Repository and GPG key](#add-cloudstack-repository-and-gpg-key)
-- [Installing Cloudstack and MySQL Server](#installing-cloudstack-and-mysql-server)
-- [Restart and check mysql service status](#restart-and-check-mysql-service-status)
-- [Deploy Database as Root and create user name and password](#deploy-database-as-root-and-create-user-name-and-password)
-- [Setup Primary Storage](#setup-primary-storage)
-- [Configure NFS Server](#configure-nfs-server)
-  - [Additional Information](#additional-information)
-  - [Explanation of NFS Commands](#explanation-of-nfs-commands)
-- [Set up validation](#setup-validation)
-- [Common Error and Fixes](#common-errors-and-fixes)
-- [Possible Warning](#possible-warning-and-is-it-safe-to-ignore)
+## Table of Contents
+
+- [Cloudstack Installation](#cloudstack-installation)
+  - [Table of Contents](#table-of-contents)
+  - [Add CloudStack Repository and GPG Key](#add-cloudstack-repository-and-gpg-key)
+  - [Installing Cloudstack and Mysql Server](#installing-cloudstack-and-mysql-server)
+  - [Configure Mysql Config File](#configure-mysql-config-file)
+  - [Restart and check mysql service status](#restart-and-check-mysql-service-status)
+  - [Deploy Database as Root and create user name and password](#deploy-database-as-root-and-create-user-name-and-password)
+  - [Setup Primary Storage](#setup-primary-storage)
+  - [Configure NFS Server](#configure-nfs-server)
+    - [Additional Information](#additional-information)
+    - [Explanation of NFS Commands](#explanation-of-nfs-commands)
+  - [Setup Validation](#setup-validation)
+  - [Common Errors and Fixes](#common-errors-and-fixes)
+  - [Possible Warning and is it Safe to Ignore?](#possible-warning-and-is-it-safe-to-ignore)
 
 ## Add CloudStack Repository and GPG Key
 
@@ -116,25 +121,25 @@ service nfs-kernel-server restart
 
 Run these command to ensure everything is properly set up
 
-1) Check if MySQL is listening on port 3306:
+1. Check if MySQL is listening on port 3306:
 
 ```bash
 ss -tulnp | grep 3306
 ```
 
-2) Verify Cloudstack database Exist:
+2. Verify Cloudstack database Exist:
 
 ```bash
 mysql -u cloud -pcloud -e "show databases;"
 ```
 
-3) Check Cloudstack management service status
+3. Check Cloudstack management service status
 
 ```bash
 systemctl status cloudstack-management
 ```
 
-4) Monitor Cloudstack logs
+4. Monitor Cloudstack logs
 
 ```bash
 tail -f /var/log/cloudstack/management/management-server.log
@@ -142,19 +147,19 @@ tail -f /var/log/cloudstack/management/management-server.log
 
 ## Common Errors and Fixes
 
-| Error Message                                           | Likely Cause                          | Solution                                                       |
-|--------------------------------------------------------|---------------------------------------|----------------------------------------------------------------|
-| `Access denied for user 'cloud'@'localhost'`           | Incorrect database user or password   | Ensure you used the correct format: `cloud:cloud@localhost`    |
-| `cloudstack-setup-databases: command not found`        | CloudStack not installed correctly    | Reinstall: `apt-get install --reinstall cloudstack-management` |
-| MySQL fails to restart due to `sql-mode`               | Syntax or formatting error            | Use double quotes (`"`) around the entire value                |
-| NFS export not visible                                 | Export not applied or paths missing   | Make sure `/export/...` exists and run `exportfs -a`           |
-| `rpc.mountd` port conflict                             | Port already in use                   | Change to a different unused port in the NFS config            |
+| Error Message                                   | Likely Cause                        | Solution                                                       |
+| ----------------------------------------------- | ----------------------------------- | -------------------------------------------------------------- |
+| `Access denied for user 'cloud'@'localhost'`    | Incorrect database user or password | Ensure you used the correct format: `cloud:cloud@localhost`    |
+| `cloudstack-setup-databases: command not found` | CloudStack not installed correctly  | Reinstall: `apt-get install --reinstall cloudstack-management` |
+| MySQL fails to restart due to `sql-mode`        | Syntax or formatting error          | Use double quotes (`"`) around the entire value                |
+| NFS export not visible                          | Export not applied or paths missing | Make sure `/export/...` exists and run `exportfs -a`           |
+| `rpc.mountd` port conflict                      | Port already in use                 | Change to a different unused port in the NFS config            |
 
 ## Possible Warning and is it Safe to Ignore?
 
-| Warning / Message                                       | Safe to Ignore? | Notes                                                                 |
-|----------------------------------------------------------|------------------|------------------------------------------------------------------------|
-| `Warning: Using a password on the command line`          |  Yes            | Just a security notice when using passwords in CLI                     |
-| `systemd: Detected architecture`                         |  Yes            | Informational, not a problem                                           |
-| `cloudstack-setup-databases: database already exists`    |  Depends        | Safe if it's an intentional redeploy. Otherwise, check for conflicts   |
-| `rpc.statd not running but is required`                  |  No             | Ensure `NEED_STATD=yes` is set and restart `nfs-common`                |
+| Warning / Message                                     | Safe to Ignore? | Notes                                                                |
+| ----------------------------------------------------- | --------------- | -------------------------------------------------------------------- |
+| `Warning: Using a password on the command line`       | Yes             | Just a security notice when using passwords in CLI                   |
+| `systemd: Detected architecture`                      | Yes             | Informational, not a problem                                         |
+| `cloudstack-setup-databases: database already exists` | Depends         | Safe if it's an intentional redeploy. Otherwise, check for conflicts |
+| `rpc.statd not running but is required`               | No              | Ensure `NEED_STATD=yes` is set and restart `nfs-common`              |

@@ -1,18 +1,28 @@
 # Configure Cloudstack Host with KVM Hypervisor
 
-- [Install KVM and CloudStack Agent](#install-kvm-and-cloudstack-agent)
-- [Configure KVM Virtualization Management](#configure-kvm-virtualization-management)
-- [Libvirt TCP Configuration](#libvirt-tcp-configuration)
-- [Restart libvirtd](#restart-libvirtd)
-- [Configuration to Support Docker and Other Services](#configuration-to-support-docker-and-other-services)
-- [Generate Unique Host ID](#generate-unique-host-id)
-- [Restart libvirtd (after updating UUID)](#restart-libvirtd-after-updating-uuid)
-- [Configure Iptables Firewall](#configure-iptables-firewall)
-- [Disable AppArmor for libvirtd](#disable-apparmor-for-libvirtd)
-- [Additional Information](#additional-information)
-- [Setup Validation](#setup-validation)
-- [Common Error and How to Fix it](#common-error-and-how-to-fix-it)
-- [Possible Warning](#possible-warning)
+## Table of Contents
+
+- [Configure Cloudstack Host with KVM Hypervisor](#configure-cloudstack-host-with-kvm-hypervisor)
+  - [Table of Contents](#table-of-contents)
+  - [Installing KVM and CloudStack Agent](#installing-kvm-and-cloudstack-agent)
+  - [Configure KVM Virtualization Management](#configure-kvm-virtualization-management)
+  - [Libvirt TCP Configuration](#libvirt-tcp-configuration)
+  - [Restart libvirtd](#restart-libvirtd)
+  - [Configuration to Support Docker and Other Services](#configuration-to-support-docker-and-other-services)
+  - [Generate Unique Host ID](#generate-unique-host-id)
+  - [Restart libvirtd (after updating UUID)](#restart-libvirtd-after-updating-uuid)
+  - [Configure Iptables Firewall](#configure-iptables-firewall)
+  - [Disable AppArmor for libvirtd](#disable-apparmor-for-libvirtd)
+  - [Additional Information](#additional-information)
+  - [Setup Validation](#setup-validation)
+    - [1. Check if Libvirt TCP Listening](#1-check-if-libvirt-tcp-listening)
+    - [2. Validate CloudStack Agent Status](#2-validate-cloudstack-agent-status)
+    - [3. Connect from CloudStack UI](#3-connect-from-cloudstack-ui)
+    - [4. Ping Libvirt from Management Server](#4-ping-libvirt-from-management-server)
+    - [5. Validate iptables](#5-validate-iptables)
+    - [5. Check AppArmor status](#5-check-apparmor-status)
+  - [Common Error and How to Fix It](#common-error-and-how-to-fix-it)
+  - [Possible Warning](#possible-warning)
 
 ## Installing KVM and CloudStack Agent
 
@@ -88,8 +98,8 @@ echo host_uuid = "\"$UUID\"" >> /etc/libvirt/libvirtd.conf
 > ```bash
 > nvim /etc/libvirt/libvirtd.conf
 > ```
-> ![6b](../images/cloudstack-host-kvm/06_check-uuid.png)
-> ![6c](../images/cloudstack-host-kvm/06_regenerate-uuid.png)
+>
+> ![6b](../images/cloudstack-host-kvm/06_check-uuid.png) > ![6c](../images/cloudstack-host-kvm/06_regenerate-uuid.png)
 
 ## Restart libvirtd (after updating UUID)
 
@@ -158,12 +168,12 @@ apparmor_parser -R /etc/apparmor.d/usr.lib.libvirt.virt-aa-helper
 
 ## Additional Information
 
-* **CloudStack agent configuration located in**: `/etc/cloudstack/agent/agent.properties`
-* **Logs can be found in**:
-  * Libvirt logs: `/var/log/libvirt/`
-  * CloudStack agent logs: `/var/log/cloudstack/agent/agent.log`
-* **Default libvirt TCP port**: `16509`
-* **Useful services to check**:
+- **CloudStack agent configuration located in**: `/etc/cloudstack/agent/agent.properties`
+- **Logs can be found in**:
+  - Libvirt logs: `/var/log/libvirt/`
+  - CloudStack agent logs: `/var/log/cloudstack/agent/agent.log`
+- **Default libvirt TCP port**: `16509`
+- **Useful services to check**:
 
   ```bash
   systemctl status libvirtd
@@ -194,9 +204,9 @@ Should show `active (running)` without repeated restart attempts.
 
 ### 3. Connect from CloudStack UI
 
-* Go to **Infrastructure > Hosts**
-* Add the KVM host IP and credentials.
-* Host should register successfully and appear as "Enabled".
+- Go to **Infrastructure > Hosts**
+- Add the KVM host IP and credentials.
+- Host should register successfully and appear as "Enabled".
 
 ### 4. Ping Libvirt from Management Server
 
@@ -230,7 +240,7 @@ Should not list libvirtd under active profiles.
 | CloudStack cannot add host                        | Agent not running or blocked by firewall | Check `cloudstack-agent`, open port 16509                |
 | `Unable to connect to libvirt`                    | Auth config issue or host UUID missing   | Ensure `auth_tcp="none"` and `host_uuid` is set          |
 | `bridge-nf-call-iptables` related error in Docker | Kernel sysctl values not set             | Re-run `sysctl -p` after appending to `/etc/sysctl.conf` |
-| AppArmor denial messages in logs  | AppArmor blocking libvirt                | Disable as shown above |
+| AppArmor denial messages in logs                  | AppArmor blocking libvirt                | Disable as shown above                                   |
 
 ---
 
@@ -238,17 +248,17 @@ Should not list libvirtd under active profiles.
 
 Not all warnings require action. Here's a general rule on this case:
 
-* **Safe to ignore**:
+- **Safe to ignore**:
 
-  * Warnings like "default TLS port not enabled"
-  * Notices about deprecated configs (if not impacting functionality)
-  * When `iptables-persistent: Warning on boot` warning shown, as long as rules load with `iptables -L`.
+  - Warnings like "default TLS port not enabled"
+  - Notices about deprecated configs (if not impacting functionality)
+  - When `iptables-persistent: Warning on boot` warning shown, as long as rules load with `iptables -L`.
 
-* **Must NOT ignore**:
+- **Must NOT ignore**:
 
-  * Errors that prevent the agent or `libvirtd` from starting
-  * Duplicate UUID or failed host registration
-  * Authentication or permission denied errors
+  - Errors that prevent the agent or `libvirtd` from starting
+  - Duplicate UUID or failed host registration
+  - Authentication or permission denied errors
 
 To ensure everything is running well, monitor logs using this command.
 

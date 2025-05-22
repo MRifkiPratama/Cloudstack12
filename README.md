@@ -19,7 +19,6 @@
     - [Change the IP](#change-the-ip)
     - [Confirm Netplan](#confirm-netplan)
   - [Cloudstack Installation](#cloudstack-installation)
-    - [Add CloudStack Repository and GPG Key](#add-cloudstack-repository-and-gpg-key)
     - [Installing Cloudstack and Mysql Server](#installing-cloudstack-and-mysql-server)
     - [Configure Mysql Config File](#configure-mysql-config-file)
     - [Restart and check mysql service status](#restart-and-check-mysql-service-status)
@@ -34,8 +33,37 @@
     - [Restart libvirtd (after updating UUID)](#restart-libvirtd-after-updating-uuid)
     - [Configure Iptables Firewall](#configure-iptables-firewall)
     - [Disable AppArmor for libvirtd](#disable-apparmor-for-libvirtd)
-  - [Start CloudStack Management Server](#start-cloudstack-management-server)
-
+  - [Website CloudStack Installation](#website-cloudstack-installation)
+    - [Access the CloudStack Web Interface](#access-the-cloudstack-web-interface)
+    - [Add a Zone → Network Configuration](#add-a-zone--network-configuration)
+      - [Select Zone Type](#select-zone-type)
+      - [Select Network Type](#select-network-type)
+      - [Fill Zone Details](#fill-zone-details)
+      - [Configure Network](#configure-network)
+        - [Add Physical Network](#add-physical-network)
+        - [Configure Public Traffic](#configure-public-traffic)
+      - [Add Pod](#add-pod)
+      - [Configure Guest Traffic](#configure-guest-traffic)
+      - [Add Resources](#add-resources)
+        - [Cluster](#cluster)
+        - [Host](#host)
+        - [Primary Storage](#primary-storage)
+        - [Secondary Storage](#secondary-storage)
+  - [Cloudstack Infrastructure Set Up](#cloudstack-infrastructure-set-up)
+    - [Download the ISO](#download-the-iso)
+    - [Create a Compute Offering](#create-a-compute-offering)
+  - [Create a New Instance](#create-a-new-instance)
+    - [Create a New Instance](#create-a-new-instance-1)
+      - [Select Deployment Infrastructure](#select-deployment-infrastructure)
+      - [Template/ISO](#templateiso)
+      - [Configure Network](#configure-network-1)
+      - [Configure Instance Details](#configure-instance-details)
+      - [Launch the Instance](#launch-the-instance)
+      - [Ubuntu Server Installation](#ubuntu-server-installation)
+      - [Installation Complete](#installation-complete)
+  - [Cloudstack Network Configuration](#cloudstack-network-configuration)
+    - [Configure Egress](#configure-egress)
+    - [Configure Port Forwarding](#configure-port-forwarding)
 
 ## Contributor
 
@@ -103,7 +131,7 @@ The tools that we use are:
 
 ## Network Configuration
 
-The netplan configuration is similar to the network/wifi setting in Ubuntu Desktop/Windows, but we edit it using a file. 
+The netplan configuration is similar to the network/wifi setting in Ubuntu Desktop/Windows, but we edit it using a file.
 
 **<center>[Click for Detailed Network Explanation](/details/00_netplan.md)</center>**
 
@@ -130,15 +158,15 @@ network:
 
   bridges:
     cloudbr0:
-      interfaces: 
+      interfaces:
         - enp0s3
-      addresses: 
+      addresses:
         - 192.168.1.220/24 #Your host IP address
       routes:
         - to: default
           via: 192.168.1.1
       nameservers:
-        addresses: 
+        addresses:
           - 8.8.8.8
           - 8.8.4.4
 
@@ -316,7 +344,7 @@ Make the rules persistent:
 sudo apt-get install iptables-persistent
 ```
 
-> When prompted, answer **Yes** to save current rules.
+When prompted, answer **Yes** to save current rules.
 
 ### Disable AppArmor for libvirtd
 
@@ -331,58 +359,66 @@ apparmor_parser -R /etc/apparmor.d/usr.lib.libvirt.virt-aa-helper
 
 ---
 
-## Start CloudStack Management Server
+## Website CloudStack Installation
 
 ```bash
 cloudstack-setup-management
 systemctl status cloudstack-management
 tail -f /var/log/cloudstack/management/management-server.log
 ```
-![Apache Cloudstack Website](images/apache-cloudstack.png)
 
 ### Access the CloudStack Web Interface
 
-Open your browser and go to:
-👉 [http://100.86.85.32:8080/](http://100.86.85.32:8080/)
+Open your browser and access the host IP address port 8080.
+
+> Example: `http://192.168.1.220:8080` if connected to the same network.  
+> Example: `http://100.102.255.28` if using Tailscale.
+
+
+![Apache Cloudstack Website](images/apache-cloudstack.png)
 
 Default Login:
 
-```
-Username: admin  
+```plaintext
+Username: admin
 Password: password
 ```
 
 ### Add a Zone → Network Configuration
+
 ---
 
 #### Select Zone Type
+
 You will be asked to choose the **zone type**:
+
 - **Core**: Standard zone where main compute workloads run. Suitable for production environments.
 - **Edge**: Lightweight zone typically used for edge computing (e.g., IoT, CDN, remote locations). May have limited resources or services.
 
 > **Recommendation**: Select `Core` for a full-featured, general-purpose zone.
 
-
 #### Select Network Type
+
 Next, choose the **network type**:
+
 - **Basic**: Flat network, no VLANs. Each VM gets a direct IP. Simpler setup.
 - **Advanced**: Supports VLANs, virtual routers, and multiple guest networks. More flexibility.
 
 > **Recommendation**: Select `Advanced` for most production use cases with isolation and rich networking features.
 
-
 #### Fill Zone Details
 
-| Field          | Example           | Description                          |
-|----------------|-------------------|--------------------------------------|
-| Name           | `Final-Zone-12`   | A descriptive name for the zone      |
-| IPv4 DNS 1     | `8.8.8.8`         | Public DNS server                    |
-| Internal DNS 1 | `192.168.1.220`   | Internal DNS for system VMs          |
-| Hypervisor     | `KVM`             | Type of hypervisor used              |
+| Field          | Example         | Description                     |
+| -------------- | --------------- | ------------------------------- |
+| Name           | `Final-Zone-12` | A descriptive name for the zone |
+| IPv4 DNS 1     | `8.8.8.8`       | Public DNS server               |
+| Internal DNS 1 | Host machine IP: `192.168.1.220` | Internal DNS for system VMs     |
+| Hypervisor     | `KVM`           | Type of hypervisor used         |
 
 #### Configure Network
 
 ##### Add Physical Network
+
 1. Enter the name of the physical network, e.g., `Physical Network 1`
 2. Select the **Isolation Method**: e.g., `VLAN`
 3. Enable the following **Traffic Types**:
@@ -392,118 +428,219 @@ Next, choose the **network type**:
 
 ##### Configure Public Traffic
 
-| Field     | Example            |
-|-----------|--------------------|
-| Gateway   | `192.168.1.1`      |
-| Netmask   | `255.255.255.0`    |
-| Start IP  | `192.168.1.221`    |
-| End IP    | `192.168.1.225`    |
+| Field    | Example         |
+| -------- | --------------- |
+| Gateway  | `192.168.1.1`   |
+| Netmask  | `255.255.255.0` |
+| Start IP | Unused IP in nework: `192.168.1.221` |
+| End IP   | Unused IP in nework: `192.168.1.225` |
 
 > These IPs are used for public access to VMs.
 
 #### Add Pod
 
 Each zone must have at least **one pod**, which contains clusters and hosts.
-| Field     | Example           |
+| Field | Example |
 |-----------|-------------------|
-| Name      | `Final-Pod-12`    |
-| Gateway   | `192.168.1.1`     |
-| Netmask   | `255.255.255.0`   |
-| Start IP  | `192.168.1.226`   |
-| End IP    | `192.168.1.230`   |
+| Name | `Final-Pod-12` |
+| Gateway | `192.168.1.1` |
+| Netmask | `255.255.255.0` |
+| Start IP | Unused IP in nework: `192.168.1.226` |
+| End IP | Unused IP in nework: `192.168.1.230` |
 
 #### Configure Guest Traffic
+
 - **VLAN/VNI Range**: `3300 - 3339`
 
 > Used to isolate guest network traffic. Ensure VLANs are configured on your switch/router.
 
 #### Add Resources
+
 ##### Cluster
-- **Cluster Name**: `Final-Cluster-12`
+
+- **Example Cluster Name**: `Final-Cluster-12`
 
 > Clusters group hypervisor hosts that share storage and network configurations.
 
 ##### Host
 
-| Field     | Example            |
-|-----------|--------------------|
-| Hostname  | `192.168.1.220`    |
-| Username  | `root`             |
-| Password  | `******`           |
+| Field    | Example         |
+| -------- | --------------- |
+| Hostname | Host machine IP: `192.168.1.220` |
+| Username | `root`          |
+| Password | Host machine root Password: `******`        |
 
 > Add at least one host running your chosen hypervisor (e.g., KVM).
 
 ##### Primary Storage
 
-| Field     | Example                |
-|-----------|------------------------|
-| Name      | `Final-Primstor-12`    |
-| Scope     | `Zone`                 |
-| Protocol  | `NFS`                  |
-| Server    | `192.168.1.220`        |
-| Path      | `/export/primary`      |
-| Provider  | `DefaultPrimary`       |
+| Field    | Example             |
+| -------- | ------------------- |
+| Name     | `Final-Primstor-12` |
+| Scope    | `Zone`              |
+| Protocol | `NFS`               |
+| Server   | Host machine IP: `192.168.1.220`     |
+| Path     | `/export/primary`   |
+| Provider | `DefaultPrimary`    |
 
 > Primary storage holds VM disk volumes.
 
 ##### Secondary Storage
 
-| Field     | Example                |
-|-----------|------------------------|
-| Provider  | `NFS`                  |
-| Name      | `Final-Secstor-2`      |
-| Server    | `192.168.1.1`          |
-| Path      | `/export/secondary`    |
+| Field    | Example             |
+| -------- | ------------------- |
+| Provider | `NFS`               |
+| Name     | `Final-Secstor-2`   |
+| Server   | Host machine IP: `192.168.1.220`       |
+| Path     | `/export/secondary` |
 
 > Secondary storage is used for templates, ISOs, and snapshots.
 
 ---
 
-## Create Virtual Machine
+## Cloudstack Infrastructure Set Up
 
-### Create a Compute Offering
-A **Compute Offering** defines the CPU, memory, and other compute resources allocated to virtual machines.
+### Download the ISO
+
+Download the ISO file for the operating system you want to install on your VM.
+
+Find your iso download link on the internet, make sure it is a direct link to the ISO file (ussually ends with `.iso`). For example, for Ubuntu Server 22.04:
+
+```plaintext
+https://releases.ubuntu.com/jammy/ubuntu-22.04.5-live-server-amd64.iso
+```
+
+From the sidebar, navigate to `Images` > `ISO` > `Register ISO`.
 
 Fill in the Details:
 
-| Field                     | Value           |
-|---------------------------|---------------  |
-| Name                      | `big`           |
-| Description               | `big`           |
-| Compute Offering Type     | `Fixed Offering`|
-| CPU Cores                 | `4`             |
-| CPU (MHz)                 | `1000`          |
-| Memory (MB)               | `4096`          |
-| Dynamic Scaling Enabled   | `On`            |
-| GPU                       | `None`          |
-| Public                    | `Yes`           |
+| Field                   | Value            |
+| ----------------------- | ---------------- |
+| URL                    | `<your iso download link>` |
+| Name                    | `<your iso name>` Ex: `Ubuntu Server 22.04` |
+| Description             | `<your iso description>` Ex: `Ubuntu Server 22.04` |
+
+Leave the rest as default.
+
+This might take a while depending on your internet connection. You can check the status by clicking your iso name and going to the `Zone` tab.
+
+### Create a Compute Offering
+
+A **Compute Offering** defines the CPU, memory, and other compute resources allocated to virtual machines.
+
+From the sidebar, navigate to `Compute Offering` > `Add Compute Offering`.
+
+Fill in the Details:
+
+| Field                   | Value            |
+| ----------------------- | ---------------- |
+| Name                    | `big`            |
+| Description             | `big`            |
+| Compute Offering Type   | `Fixed Offering` |
+| CPU Cores               | `4`              |
+| CPU (MHz)               | `1000`           |
+| Memory (MB)             | `4096`           |
+| Dynamic Scaling Enabled | `On`             |
+| GPU                     | `None`           |
+| Public                  | `Yes`            |
+
+this will create a compute offering with 4 CPU cores and 4 GB of RAM. It is recommended to create this new offering because the default offering only has 1 CPU core which might cause the VM to be slow.
+
+## Create a New Instance
 
 ### Create a New Instance
+
+From the sidebar, navigate to `Compute` > `Instances` > `New Instance`.
+
 #### Select Deployment Infrastructure
-- **Zone**: `final-zone-12`
-- **Pod**: `final-pod-12`
-- **Cluster**: `final-cluster-12`
-- **Host**: `mizuki`
+
+- **Zone**: `<your zone name>` Ex: `Final-Zone-12`
+- **Pod**: `<your pod name>` Ex: `Final-Pod-12`
+- **Cluster**: `<your cluster name>` Ex: `Final-Cluster-12`
+- **Host**: `<your host name>` Ex: `mizuki`
 
 #### Template/ISO
+
+- Click the `ISO` tab
 - Choose from **My ISOs**
-- Select your preferred ISO (e.g., a Linux or Windows boot image)
+- Select your downloaded ISO
 
 #### Configure Network
+
 If you don’t have an existing network, create **Isolated** network:
-| Field             | Value                                      |
+| Field | Value |
 |-------------------|--------------------------------------------|
-| Name              | `network-12`                               |
-| Zone              | `final-zone-12`                            |
+| Name | `network-12` |
+| Zone | `final-zone-12` |
 
 > This network will provide isolated guest networking with outbound internet access.
 
 #### Configure Instance Details
-| Field               | Value                    |
-|---------------------|--------------------------|
-| Name                | `mizu7`                  |
-| Keyboard Language   | `Standard US Keyboard`   |
 
-#### Final Step: Launch the Instance
+| Field             | Value                  |
+| ----------------- | ---------------------- |
+| Name              | `mizu7`                |
+| Keyboard Language | `Standard US Keyboard` |
+
+#### Launch the Instance
+
 Click **"Launch Instance"**.  
 CloudStack will provision your virtual machine based on the provided options.
+
+#### Ubuntu Server Installation
+
+This is the installation process for Ubuntu Server. Follow the on-screen instructions to complete the installation.
+
+After the installation, you will be prompted to reboot. Then, after being prompted to remove the installation media, you can `detach iso` from the Instance page.
+
+![Ubuntu Server Installation](images/web/26detach.png)
+
+![Ubuntu Server Installation](images/web/27ubuntusuccessfull.png)
+
+#### Installation Complete
+
+Congratulations! You have successfully installed a Virtual Machine on your CloudStack environment. You can now access it via the console, but if you try to access the internet (Ex: `ping 8.8.8.8`), it will not work. This is because the network is not configured yet.
+
+## Cloudstack Network Configuration
+
+If you are using isolated network, you need to configure the network to allow the VM to access the internet and also configure port forwarding to access the VM using SSH.
+
+### Configure Egress
+
+For the VM be able to access the internet, we need to configure the network.
+
+- Go to `Network` > `Guest Network`
+- Click your network name (Ex: `network-12`)
+- Go to the `Egress` tab
+- Add `0.0.0.0/0` to the `Source CIDR` and `Destination CIDR` fields. This will allow all traffic to go out of the network.
+- Select `All` for the `Protocol` field.
+- Click `Add`
+
+After configuring this, you should see it update live in the VM console and be able to access the internet. Try to ping `ping 8.8.8.8` to check if it works.
+
+You could install a VPN like Tailscale on the VM to access (SSH) it from anywhere. Another option is to configure port forwarding to access the VM using SSH if you are not using a VPN.
+
+### Configure Port Forwarding
+
+To access the VM using SSH, we need to configure port forwarding and allow SSH traffic to go through the firewall.
+
+Firewall Setup:
+
+- Go to `Network` > `Public IP addresses`
+- Click on the `Source NAT` IP address
+- Go to the `Firewall` tab
+- Add `0.0.0.0/0` to the `Source CIDR`
+- Add `22` to the `Start Port` and `23` to the `End Port`
+- Leave the `Protocol` as `TCP`
+
+Port Forwarding Setup:
+
+- Go to the `Port Forwarding` tab
+- put `22` to the `Start Port` of both the private port and public port
+- put `23` to the `End Port` of both the private port and public port
+- Leave the `Protocol` as `TCP`
+- Click `Add`
+- Select the `VM` you want to forward the port to
+- Click `OK`
+
+You should now be able to access the VM using SSH from your personal computer using the source NAT IP address if you are in the same network. 
