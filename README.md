@@ -34,36 +34,15 @@
     - [Configure Iptables Firewall](#configure-iptables-firewall)
     - [Disable AppArmor for libvirtd](#disable-apparmor-for-libvirtd)
   - [Website CloudStack Installation](#website-cloudstack-installation)
+    - [Install Cloudstack Management Server](#install-cloudstack-management-server)
     - [Access the CloudStack Web Interface](#access-the-cloudstack-web-interface)
     - [Add a Zone → Network Configuration](#add-a-zone--network-configuration)
-      - [Select Zone Type](#select-zone-type)
-      - [Select Network Type](#select-network-type)
-      - [Fill Zone Details](#fill-zone-details)
-      - [Configure Network](#configure-network)
-        - [Add Physical Network](#add-physical-network)
-        - [Configure Public Traffic](#configure-public-traffic)
-      - [Add Pod](#add-pod)
-      - [Configure Guest Traffic](#configure-guest-traffic)
-      - [Add Resources](#add-resources)
-        - [Cluster](#cluster)
-        - [Host](#host)
-        - [Primary Storage](#primary-storage)
-        - [Secondary Storage](#secondary-storage)
-  - [Cloudstack Infrastructure Set Up](#cloudstack-infrastructure-set-up)
+    - [Launch the Zone](#launch-the-zone)
+  - [Cloudstack Configration and VM Installation](#cloudstack-configration-and-vm-installation)
     - [Download the ISO](#download-the-iso)
     - [Create a Compute Offering](#create-a-compute-offering)
-  - [Create a New Instance](#create-a-new-instance)
-    - [Create a New Instance](#create-a-new-instance-1)
-      - [Select Deployment Infrastructure](#select-deployment-infrastructure)
-      - [Template/ISO](#templateiso)
-      - [Configure Network](#configure-network-1)
-      - [Configure Instance Details](#configure-instance-details)
-      - [Launch the Instance](#launch-the-instance)
-      - [Ubuntu Server Installation](#ubuntu-server-installation)
-      - [Installation Complete](#installation-complete)
-  - [Cloudstack Network Configuration](#cloudstack-network-configuration)
-    - [Configure Egress](#configure-egress)
-    - [Configure Port Forwarding](#configure-port-forwarding)
+    - [Create a New Instance](#create-a-new-instance)
+    - [Cloudstack Network Configuration](#cloudstack-network-configuration)
 
 ## Contributor
 
@@ -298,6 +277,39 @@ UUID=$(uuid)
 echo host_uuid = "\"$UUID\"" >> /etc/libvirt/libvirtd.conf
 ```
 
+This command generates a unique UUID and appends it to the `libvirtd.conf` file. It's important to ensure that in the `libvirtd.conf` file, the UUID is correctly inserted because it is very common for the UUID not to have a value.
+
+To check if the UUID is correctly inserted, run the following command:
+
+```bash
+sudo -e /etc/libvirt/libvirtd.conf
+```
+
+Scroll to the bottom of the file and check if the UUID is correctly inserted. If it is not, repeat the command `UUID=$(uuid)` and check again. You need to delete the previous failed  host_uuid in the `libvirtd.conf` file.
+
+if the UUID is inserted correctly, you should see something like this:
+
+```bash
+host_uuid = "a1b2c3d4-e5f6-7g8h-9i0j-k1l2m3n4o5p6"
+```
+
+if the UUID is not written correctly, you should see something like this:
+
+```bash
+host_uuid = ""
+# or
+host_uuid =
+```
+
+After repeating the command `UUID=$(uuid)` and checking again, you should see the UUID correctly inserted in the `libvirtd.conf` file.
+
+```bash
+host uuid = ""
+host_uuid = "a1b2c3d4-e5f6-7g8h-9i0j-k1l2m3n4o5p6"
+```
+
+delete the previous failed host_uuid in the `libvirtd.conf` file.
+
 ### Restart libvirtd (after updating UUID)
 
 The `libvirtd` service will be restarted again to apply the UUID configuration update.
@@ -361,6 +373,12 @@ apparmor_parser -R /etc/apparmor.d/usr.lib.libvirt.virt-aa-helper
 
 ## Website CloudStack Installation
 
+Installing the CloudStack Management Server
+
+**<center>[Click for Detailed Website Installation Explanation](/details/01_utils.md)</center>**
+
+### Install Cloudstack Management Server
+
 ```bash
 cloudstack-setup-management
 systemctl status cloudstack-management
@@ -388,7 +406,7 @@ Password: password
 
 ---
 
-#### Select Zone Type
+**Select Zone Type**
 
 You will be asked to choose the **zone type**:
 
@@ -397,7 +415,9 @@ You will be asked to choose the **zone type**:
 
 > **Recommendation**: Select `Core` for a full-featured, general-purpose zone.
 
-#### Select Network Type
+---
+
+**Select Network Type**
 
 Next, choose the **network type**:
 
@@ -406,7 +426,9 @@ Next, choose the **network type**:
 
 > **Recommendation**: Select `Advanced` for most production use cases with isolation and rich networking features.
 
-#### Fill Zone Details
+---
+
+**Fill Zone Details**
 
 | Field          | Example         | Description                     |
 | -------------- | --------------- | ------------------------------- |
@@ -415,18 +437,15 @@ Next, choose the **network type**:
 | Internal DNS 1 | Host machine IP: `192.168.1.220` | Internal DNS for system VMs     |
 | Hypervisor     | `KVM`           | Type of hypervisor used         |
 
-#### Configure Network
+---
 
-##### Add Physical Network
+**Configure Network**
 
-1. Enter the name of the physical network, e.g., `Physical Network 1`
-2. Select the **Isolation Method**: e.g., `VLAN`
-3. Enable the following **Traffic Types**:
-   - Guest
-   - Management
-   - Public
+**Add Physical Network**
 
-##### Configure Public Traffic
+Leave the physical network as default and click **"Next"**.
+
+**Configure Public Traffic**
 
 | Field    | Example         |
 | -------- | --------------- |
@@ -437,7 +456,9 @@ Next, choose the **network type**:
 
 > These IPs are used for public access to VMs.
 
-#### Add Pod
+---
+
+**Add Pod**
 
 Each zone must have at least **one pod**, which contains clusters and hosts.
 | Field | Example |
@@ -448,21 +469,25 @@ Each zone must have at least **one pod**, which contains clusters and hosts.
 | Start IP | Unused IP in nework: `192.168.1.226` |
 | End IP | Unused IP in nework: `192.168.1.230` |
 
-#### Configure Guest Traffic
+---
+
+**Configure Guest Traffic**
 
 - **VLAN/VNI Range**: `3300 - 3339`
 
 > Used to isolate guest network traffic. Ensure VLANs are configured on your switch/router.
 
-#### Add Resources
+---
 
-##### Cluster
+**Add Resources**
+
+**Cluster**
 
 - **Example Cluster Name**: `Final-Cluster-12`
 
 > Clusters group hypervisor hosts that share storage and network configurations.
 
-##### Host
+**Host**
 
 | Field    | Example         |
 | -------- | --------------- |
@@ -470,9 +495,10 @@ Each zone must have at least **one pod**, which contains clusters and hosts.
 | Username | `root`          |
 | Password | Host machine root Password: `******`        |
 
-> Add at least one host running your chosen hypervisor (e.g., KVM).
+> Add you host machine IP address, username, and password.
+> This is the host machine that will run the VMs.
 
-##### Primary Storage
+**Primary Storage**
 
 | Field    | Example             |
 | -------- | ------------------- |
@@ -485,7 +511,7 @@ Each zone must have at least **one pod**, which contains clusters and hosts.
 
 > Primary storage holds VM disk volumes.
 
-##### Secondary Storage
+**Secondary Storage**
 
 | Field    | Example             |
 | -------- | ------------------- |
@@ -496,9 +522,19 @@ Each zone must have at least **one pod**, which contains clusters and hosts.
 
 > Secondary storage is used for templates, ISOs, and snapshots.
 
+### Launch the Zone
+
+Click **"Launch Zone"** to create the zone with the specified configurations. This process may take some time.
+
+![Apache Cloudstack Website](images/web/17launchprocess.png)
+
+If successful, you will see a message indicating that the zone has been created.  If you encounter any issues, you can click the `Fix Issues` button and you will be redirected to the issue page and change the configuration.
+
+It is common to encounter network issues, because the reserved IP address already used by another device in the network. You can assign a different reserved IP address and try again.
+
 ---
 
-## Cloudstack Infrastructure Set Up
+## Cloudstack Configration and VM Installation
 
 ### Download the ISO
 
@@ -546,26 +582,30 @@ Fill in the Details:
 
 this will create a compute offering with 4 CPU cores and 4 GB of RAM. It is recommended to create this new offering because the default offering only has 1 CPU core which might cause the VM to be slow.
 
-## Create a New Instance
-
 ### Create a New Instance
 
 From the sidebar, navigate to `Compute` > `Instances` > `New Instance`.
 
-#### Select Deployment Infrastructure
+---
+
+**Select Deployment Infrastructure**
 
 - **Zone**: `<your zone name>` Ex: `Final-Zone-12`
 - **Pod**: `<your pod name>` Ex: `Final-Pod-12`
 - **Cluster**: `<your cluster name>` Ex: `Final-Cluster-12`
 - **Host**: `<your host name>` Ex: `mizuki`
 
-#### Template/ISO
+---
+
+**Template/ISO**
 
 - Click the `ISO` tab
 - Choose from **My ISOs**
 - Select your downloaded ISO
 
-#### Configure Network
+---
+
+**Configure Network**
 
 If you don’t have an existing network, create **Isolated** network:
 | Field | Value |
@@ -575,19 +615,25 @@ If you don’t have an existing network, create **Isolated** network:
 
 > This network will provide isolated guest networking with outbound internet access.
 
-#### Configure Instance Details
+---
+
+**Configure Instance Details**
 
 | Field             | Value                  |
 | ----------------- | ---------------------- |
 | Name              | `mizu7`                |
 | Keyboard Language | `Standard US Keyboard` |
 
-#### Launch the Instance
+---
+
+**Launch the Instance**
 
 Click **"Launch Instance"**.  
 CloudStack will provision your virtual machine based on the provided options.
 
-#### Ubuntu Server Installation
+---
+
+**Ubuntu Server Installation**
 
 This is the installation process for Ubuntu Server. Follow the on-screen instructions to complete the installation.
 
@@ -597,15 +643,19 @@ After the installation, you will be prompted to reboot. Then, after being prompt
 
 ![Ubuntu Server Installation](images/web/27ubuntusuccessfull.png)
 
-#### Installation Complete
+---
+
+**Installation Complete**
 
 Congratulations! You have successfully installed a Virtual Machine on your CloudStack environment. You can now access it via the console, but if you try to access the internet (Ex: `ping 8.8.8.8`), it will not work. This is because the network is not configured yet.
 
-## Cloudstack Network Configuration
+### Cloudstack Network Configuration
 
 If you are using isolated network, you need to configure the network to allow the VM to access the internet and also configure port forwarding to access the VM using SSH.
 
-### Configure Egress
+---
+
+**Configure Egress**
 
 For the VM be able to access the internet, we need to configure the network.
 
@@ -620,7 +670,9 @@ After configuring this, you should see it update live in the VM console and be a
 
 You could install a VPN like Tailscale on the VM to access (SSH) it from anywhere. Another option is to configure port forwarding to access the VM using SSH if you are not using a VPN.
 
-### Configure Port Forwarding
+---
+
+**Configure Port Forwarding**
 
 To access the VM using SSH, we need to configure port forwarding and allow SSH traffic to go through the firewall.
 

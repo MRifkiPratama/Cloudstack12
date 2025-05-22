@@ -1,142 +1,209 @@
-# Network Configuration
+# Website CloudStack Installation
 
-The netplan configuration is similar to the network/wifi setting in Ubuntu Desktop/Windows, but we edit it using a file.
-
-In this step, we will configure the network settings for the host. The host will be connected to the internet using a bridge interface. The bridge interface will be used for all network traffic on the host. The bridge interface will be created using the `cloudbr0` network interface.
+In this page, we will install the CloudStack Management Server, including setting up zones, pods, hosts, and storage.
 
 ## Table of Contents
 
-- [Network Configuration](#network-configuration)
+- [Website CloudStack Installation](#website-cloudstack-installation)
   - [Table of Contents](#table-of-contents)
-  - [Netplan](#netplan)
-    - [Netplan Command](#netplan-command)
-    - [Netplan Explanation](#netplan-explanation)
-    - [Netplan Notes](#netplan-notes)
-  - [Change the IP](#change-the-ip)
-    - [IP Change Explanation](#ip-change-explanation)
-    - [IP Change Notes](#ip-change-notes)
-    - [Netplan Image](#netplan-image)
-  - [Confirm Netplan](#confirm-netplan)
-    - [Confirm Netplan Explanation](#confirm-netplan-explanation)
-    - [Confirm Netplan Notes](#confirm-netplan-notes)
-    - [Netplan Apply Image](#netplan-apply-image)
-  - [Validation](#validation)
+  - [Install Cloudstack Management Server](#install-cloudstack-management-server)
+  - [Access the CloudStack Web Interface](#access-the-cloudstack-web-interface)
+  - [Add a Zone → Network Configuration](#add-a-zone--network-configuration)
+    - [Select Zone Type](#select-zone-type)
+    - [Select Network Type](#select-network-type)
+    - [Fill Zone Details](#fill-zone-details)
+    - [Configure Network](#configure-network)
+    - [Add Pod](#add-pod)
+    - [Configure Guest Traffic](#configure-guest-traffic)
+    - [Add Resources](#add-resources)
+  - [Launch the Zone](#launch-the-zone)
 
-## Netplan
+## Install Cloudstack Management Server
 
-### Netplan Command
+To install the CloudStack Management Server, run the following commands:
 
 ```bash
-cd /etc/netplan
-sudo -e /etc/netplan/01-static-netcfg.yaml
+cloudstack-setup-management
+systemctl status cloudstack-management
+tail -f /var/log/cloudstack/management/management-server.log
 ```
 
-### Netplan Explanation
+This will set up the management server and start the service. You can check the status of the service using the `systemctl status` command.
 
-- `cd path` changes the directory to the specified path.
-- `sudo -e filename` opens the file in the default editor. The default should be `nano`, but we've changed it to `nvim` in the `~/.bashrc` file.
+Running the `tail -f /var/log/cloudstack/management/management-server.log` command will show you the real-time logs of the management server. This is useful for debugging and checking if the server is running correctly.
 
-### Netplan Notes
+Installing this will take a while, so be patient. You can check wether the installation is successful by checking the logs. If the log speed slows down and start showing Health check messages, it means the installation is successful and you can proceed to the next step.
 
-- The netplan configuration might be named differtly, such as `00-installer-config.yaml` or `50-cloud-init.yaml`. The name is not important, but the file should be in the `/etc/netplan` directory.
-- If there is multiple files in the `/etc/netplan` directory, the file with the smallest number will be used. The files are processed in alphabetical order, so `00-installer-config.yaml` will be processed before `50-cloud-init.yaml`. If there are multiple files, the last one will be used. So if you have multiple files, make sure to edit the correct one.
+![Installing Cloudstack](../images/cli/12tail.png)
 
-## Change the IP
+## Access the CloudStack Web Interface
 
-Change the netplan configuration to the following. The IP address should be the same as the one you set in the `cloudbr0` bridge in the `cloudbr0` network interface.
+Open your browser and access the host IP address port 8080.
 
-```yaml
-# This is the network config written by 'subiquity'
-network:
-  version: 2
-  renderer: networkd
+> Example: `http://192.168.1.220:8080` if connected to the same network.  
+> Example: `http://100.102.255.28` if using Tailscale.
 
-  ethernets:
-    enp0s3:
-      dhcp4: false
-      dhcp6: false
-      optional: true
+![Apache Cloudstack Website](../images/web/01login.png)
 
-  bridges:
-    cloudbr0:
-      interfaces:
-        - enp0s3
-      addresses:
-        - 192.168.1.220/24 #Your host IP address
-      routes:
-        - to: default
-          via: 192.168.1.1
-      nameservers:
-        addresses:
-          - 8.8.8.8
-          - 8.8.4.4
+Default Login:
 
-      dhcp4: false
-      dhcp6: false
-
-      parameters:
-        stp: false
-        forward-delay: 0
+```plaintext
+Username: admin
+Password: password
 ```
 
-### IP Change Explanation
+After logging in, you will be at the start page of the CloudStack web interface. Click the `Continue with Installation` button to proceed.
 
-Bridge `cloudbr0` is created with the following settings:
+![dashboard](../images/web/02home.png)
 
-- `interfaces`: The interface to be bridged. We enslave the `enp0s3` interface to the `cloudbr0` bridge, which means that the `cloudbr0` bridge will be used for all network traffic on the `enp0s3` interface.
-- `addresses`: The IP address of the host. This should be the same as the one you set in the `cloudbr0` bridge in the `cloudbr0` network interface.
-- `routes`: The default route for the host
-- `nameservers`: The DNS servers for the host.
-- turn of dhcp using `dhcp4: false` and `dhcp6: false`
-- `stp: false` and `forward-delay: 0` are used to speed up the bridge connection. This is not necessary for a single host, but it can help in some cases.
+First, you will be asked to change the password. Enter a new password and click `Change Password`.
 
-### IP Change Notes
+![Apache Cloudstack Website](../images/web/03password.png)
 
-- For cloudstack installation, wifi cannot be used. The wifi interface cannot be enslaved to the bridge. There might be a workaround treating the wifi interface as a proxy interface, but using LAN is easier.
-- For Ubuntu Desktop, the network renderer is `NetworkManager`, be sure to choose the coorrect renderer. The default renderer for Ubuntu Desktop is `NetworkManager`, and for Ubuntu Server it is `networkd`.
-- Using dhcp is possible, but it is not recommended. Later on in the dashboard setup, if the host IP is requested, `127.0.0.1` can be used. But it is more convenient to use a static IP address and input the host IP address in the dashboard setup.
+## Add a Zone → Network Configuration
 
-### Netplan Image
+### Select Zone Type
 
-![Netplan Config](../images/cli/1netplan.png)
+You will be asked to choose the **zone type**:
 
-## Confirm Netplan
+- **Core**: Standard zone where main compute workloads run. Suitable for production environments.
+- **Edge**: Lightweight zone typically used for edge computing (e.g., IoT, CDN, remote locations). May have limited resources or services.
 
-After editing the netplan configuration, confirm the changes using the following commands:
+> **Recommendation**: Select `Core` for a full-featured, general-purpose zone.
 
-```bash
-sudo netplan get
-sudo netplan apply
-```
+![](../images/web/04zonetype.png)
 
-### Confirm Netplan Explanation
+### Select Network Type
 
-- `sudo netplan get` shows the current netplan configuration. If the configuration is correct, it should show the same configuration as the netplan file you edited without comments or blank lines.
-- `sudo netplan apply` applies the changes to the network configuration. This will restart the network service and apply the changes.
+Next, choose the **network type**:
 
-### Confirm Netplan Notes
+- **Basic**: Flat network, no VLANs. Each VM gets a direct IP. Simpler setup.
+- **Advanced**: Supports VLANs, virtual routers, and multiple guest networks. More flexibility.
 
-- Be careful when using `sudo netplan apply`, if the configuration is incorrect, you might lose the connection to the host when using SSH. If this happens, you need to edit the netplan configuration file directly on the host machine.
-- When using `sudo netplan apply`, a warning might show `WARNING:root:Cannot call open vSwitch...`, this is normal and can be ignored. This is because the `cloudbr0` bridge is not an open vSwitch bridge, but a normal Linux bridge.
+![](../images/web/05coretype.png)
 
-### Netplan Apply Image
+> **Recommendation**: Select `Advanced` for most production use cases with isolation and rich networking features.
 
-![Netplan Apply](../images/cli/3apply.png)
+When you select `Advanced`, you will later on need to configure the network settings to be able for the VM to access the internet. If choose `Basic`, the internet should work out of the box, but if it does not, it will be difficult to troubleshoot.
 
-## Validation
+### Fill Zone Details
 
-After applying the changes, check the network configuration using the following commands:
+| Field          | Example         | Description                     |
+| -------------- | --------------- | ------------------------------- |
+| Name           | `Final-Zone-12` | A descriptive name for the zone |
+| IPv4 DNS 1     | `8.8.8.8`       | Public DNS server               |
+| Internal DNS 1 | Host machine IP: `192.168.1.220` | Internal DNS for system VMs     |
+| Hypervisor     | `KVM`           | Type of hypervisor used         |
 
-```bash
-ip a
-```
+![](../images/web/07network.png)
 
-This command will show the current network configuration. The `cloudbr0` bridge should be up and running with the correct IP address. The `enp0s3` interface should be empty and not have an IP address.
+Be sure to input your host machine IP address in the **Internal DNS 1** field. Another alternative is to use `127.0.0.1`
 
-```
-ping 1.1.1.1 -c 16
-# or
-ping 8.8.8.8 -c 16
-```
+### Configure Network
 
-This command will ping the internet to check if the network is working. If the ping is successful, the network is working correctly.
+**Add Physical Network**
+
+Leave the physical network as default and click **"Next"**.
+  
+**Configure Public Traffic**
+
+| Field    | Example         |
+| -------- | --------------- |
+| Gateway  | `192.168.1.1`   |
+| Netmask  | `255.255.255.0` |
+| Start IP | Unused IP in nework: `192.168.1.221` |
+| End IP   | Unused IP in nework: `192.168.1.225` |
+
+These IPs are used for public access to VMs. Make sure they are not already in use. The **Start IP** and **End IP** should be within the same subnet as the **Gateway**.
+
+![](../images/web/09publicipsucc.png)
+
+### Add Pod
+
+Each zone must have at least **one pod**, which contains clusters and hosts.
+| Field | Example |
+|-----------|-------------------|
+| Name | `Final-Pod-12` |
+| Gateway | `192.168.1.1` |
+| Netmask | `255.255.255.0` |
+| Start IP | Unused IP in nework: `192.168.1.226` |
+| End IP | Unused IP in nework: `192.168.1.230` |
+
+These IPs are used for the pod's management network. Make sure they are also not already in use. The **Start IP** and **End IP** should be within the same subnet as the **Gateway**.
+
+![](../images/web/10pod.png)
+
+### Configure Guest Traffic
+
+- **VLAN/VNI Range**: `3300 - 3339`
+
+> Used to isolate guest network traffic. Ensure VLANs are configured on your switch/router.
+
+![](../images/web/11guest.png)
+
+### Add Resources
+
+**Cluster**
+
+- **Example Cluster Name**: `Final-Cluster-12`
+
+> Clusters group hypervisor hosts that share storage and network configurations.
+
+![](../images/web/12cluster.png)
+
+**Host**
+
+| Field    | Example         |
+| -------- | --------------- |
+| Hostname | Host machine IP: `192.168.1.220` |
+| Username | `root`          |
+| Password | Host machine root Password: `******`        |
+
+> Add you host machine IP address, username, and password.
+> This is the host machine that will run the VMs.
+
+Make sure to use the host machine IP address, not the Tailscale IP address. Also, make sure to use the root user and password of the host machine. If it is incorrect, you will be asked to fix the issue later when you click the **"Launch Zone"** button.
+
+![](../images/web/13clusterip.png)
+
+**Primary Storage**
+
+| Field    | Example             |
+| -------- | ------------------- |
+| Name     | `Final-Primstor-12` |
+| Scope    | `Zone`              |
+| Protocol | `NFS`               |
+| Server   | Host machine IP: `192.168.1.220`     |
+| Path     | `/export/primary`   |
+| Provider | `DefaultPrimary`    |
+
+> Primary storage holds VM disk volumes.
+
+Make sure theIP address is the host machine IP address, also make sure the path is `/export/primary`. We've created this directory in the host machine before. If it does not exist, refer to the previous steps to create it.
+
+![](../images/web/14storage.png)
+
+**Secondary Storage**
+
+| Field    | Example             |
+| -------- | ------------------- |
+| Provider | `NFS`               |
+| Name     | `Final-Secstor-2`   |
+| Server   | Host machine IP: `192.168.1.220`       |
+| Path     | `/export/secondary` |
+
+> Secondary storage is used for templates, ISOs, and snapshots.
+
+Make sure the IP address is the host machine IP address, also make sure the path is `/export/secondary`. We've created this directory in the host machine before. If it does not exist, refer to the previous steps to create it.
+
+![](../images/web/15secstor.png)
+
+## Launch the Zone
+
+Click **"Launch Zone"** to create the zone with the specified configurations. This process may take some time.
+
+![Apache Cloudstack Website](../images/web/17launchprocess.png)
+
+If successful, you will see a message indicating that the zone has been created.  If you encounter any issues, you can click the `Fix Issues` button and you will be redirected to the issue page and change the configuration.
+
+It is common to encounter network issues, because the reserved IP address already used by another device in the network. You can assign a different reserved IP address and try again.
