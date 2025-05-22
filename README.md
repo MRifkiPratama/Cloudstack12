@@ -1,3 +1,9 @@
+<!--
+TODO: 
+- Add Tailscale advertising to utils
+- Refine the 05_website_configuration.md explanation
+- Add more explanation to the 07_cloudstack_network_configuration.md
+  -->
 # Single Node Apache Cloudstack Private Cloud Installation Guide
 
 ![image](https://github.com/user-attachments/assets/7f2482b6-7a3c-49ac-912c-8d22d042740b)
