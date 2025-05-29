@@ -182,7 +182,7 @@ network:
 ```
 > Replace `wlp0s20f3` with your actual Wi-Fi interface name. You can check it using `ip a` or `iw dev`.
 
-![wifi config](../images/utils/09wifis.png)
+![wifi config](../images/utils/09wifis.jpg)
 
 ### Apply the configuration:
 After saving the file (`Ctrl+O`, `Enter`, then `Ctrl+X` to exit), run:
