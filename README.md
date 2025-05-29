@@ -1,6 +1,8 @@
 <!--
 TODO: 
 - Add Tailscale advertising to utils
+- Add fish to utils
+- Add Wifi netplan to utils
 - Refine the 05_website_configuration.md explanation
 - Add more explanation to the 07_cloudstack_network_configuration.md
 - Add Electrical Engineering Department in the contributor
