@@ -19,7 +19,7 @@ In this section, we will set up some tools that will help in the installation pr
     - [Confirm Tailscale](#confirm-tailscale)
     - [Using Tailscale](#using-tailscale)
 
-## LazyVIm
+## LazyVim
 
 A configuration for Neovim that is easy to use and has a lot of features. This is the preference for one of our team members.
 
