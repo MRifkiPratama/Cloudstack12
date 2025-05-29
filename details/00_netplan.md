@@ -98,7 +98,7 @@ Bridge `cloudbr0` is created with the following settings:
 
 ### Netplan Image
 
-![Netplan Config](../images/cli/1netplan.png)
+![Netplan Config](../images/cli/01netplan.png)
 
 ## Confirm Netplan
 

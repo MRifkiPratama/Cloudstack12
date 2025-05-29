@@ -18,6 +18,12 @@ In this section, we will set up some tools that will help in the installation pr
     - [Start Tailscale](#start-tailscale)
     - [Confirm Tailscale](#confirm-tailscale)
     - [Using Tailscale](#using-tailscale)
+  - [Wi-Fi Configuration](#wifi-configuration)
+    - [Edit Netplan Configuration](#edit-the-netplan-configuration)
+    - [Add Wi-Fi Configuration](#add-the-wi-fi-configuration)
+    - [Apply New Configuration](#apply-the-configuration)
+    - [Check the Connection](#check-if-youre-connected-to-the-internet)
+    - [Additional Notes](#additional-notes)
 
 ## LazyVIm
 
@@ -145,3 +151,58 @@ ssh root@100.82.42.88
 This will SSH into your host using the Tailscale IP address. You can also use the Tailscale IP address to access the web interface of the host. Later on, we will need to open the web interface to access the CloudStack dashboard. This can be done by inputting the Tailscale IP address in the browser of your personal computer.
 
 Example: `http://100.82.42.88:8080`
+
+
+## Wi-Fi Configuration
+
+You only need to set this configuration when Ethernet is unavailable or inconvenient, for example:
+  - If your device lacks a physical Ethernet port
+  - When the Ethernet port is difficult to access
+  - Or when you frequently move the device between locations.
+This action is recommended because Wi-Fi offers greater flexibility in these scenarios compared to constantly plugging and unplugging an Ethernet cable. This method would allow the system to connect automatically to Wi-Fi on boot without relying on an Ethernet cable.
+
+### Edit the netplan configuration:
+```bash
+cd /etc/netplan
+sudo -e /etc/netplan/01-static-netcfg.yaml
+```
+
+### Add the wi-fi configuration:
+```yaml
+network:
+  version: 2
+  renderer: networkd
+  wifis:
+    wlp0s20f3:
+      optional: true
+      access-points:
+        "edbray_5G":
+          password: "12345678"
+      dhcp4: true
+```
+> Replace `wlp0s20f3` with your actual Wi-Fi interface name. You can check it using `ip a` or `iw dev`.
+
+![wifi config](../images/utils/09wifis.png)
+
+### Apply the configuration:
+After saving the file (`Ctrl+O`, `Enter`, then `Ctrl+X` to exit), run:
+```bash
+sudo netplan apply
+```
+
+### Check if you're connected to the internet:
+```bash
+ping 8.8.8.8
+```
+> If you receive replies, the setup was successful.
+
+### Additional Notes
+If `netplan apply` fails, try rebooting the system:
+```bash
+sudo reboot
+```
+
+To troubleshoot Wi-Fi connection issues, view the network logs with:
+```bash
+journalctl -u systemd-networkd
+```
