@@ -25,7 +25,7 @@ In this section, we will set up some tools that will help in the installation pr
     - [Check the Connection](#check-if-youre-connected-to-the-internet)
     - [Additional Notes](#additional-notes)
 
-## LazyVIm
+## LazyVim
 
 A configuration for Neovim that is easy to use and has a lot of features. This is the preference for one of our team members.
 
